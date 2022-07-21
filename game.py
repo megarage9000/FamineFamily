@@ -94,7 +94,8 @@ def playGame():
     # Check for events (mouse clicks, closing window)
     for event in pygame.event.get():
       if event.type == pygame.QUIT:
-        playGame = False
+        pygame.quit()
+        sys.exit()
 
       if event.type == pygame.MOUSEBUTTONDOWN:
         mousePos = pygame.mouse.get_pos()
@@ -305,3 +306,6 @@ def playGame():
   # pygame.display.flip()
 
 mainMenu()
+
+pygame.quit()
+sys.exit()
