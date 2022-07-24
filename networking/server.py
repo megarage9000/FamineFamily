@@ -3,6 +3,7 @@
 
 import socket
 import threading
+import numpy as np
 
 server = None
 HOST_NAME = socket.gethostname()
@@ -11,7 +12,10 @@ HOST_PORT = 8080
 client_name = " "
 clients = []
 clients_names = []
+client_scores = []
 MAX_CLIENTS = 5
+idx = 0
+chip_pos = np.random.rand(20, 2) * 500 # used for testing
 
 
 def start_server():
@@ -40,35 +44,50 @@ def accept_clients(the_server):
 
 
 def send_receive_client_message(client_connection, client_ip_addr):
+    global idx
+
     # Get client name from clients
     client_name = client_connection.recv(4096)
+    client_connection.send(str.encode("Connection Successful\n"))
     print(client_name.decode())
 
     # Send a welcome message
-    message = "Welcome {}. Use 'exit' to quit".format(client_name.decode())
+    message = "Welcome {}. Use 'exit' to quit\n".format(client_name.decode())
     client_connection.send(message.encode())
+
+    # todo: trigger indicating start of game
+    if (len(clients) == 5):
+        for c in clients: 
+            c.sendall(str.encode("chip_spawning_pos: " + str(chip_pos)))
 
     clients_names.append(client_name)
     print(clients_names)
 
-    while True:
-        data = client_connection.recv(4096)
-        client_msg = data.decode()
-        print(client_msg)
+    client_msg = ""
+    inx = -1
+    while True:       
+        try:
+            data = client_connection.recv(4096)
+            client_msg = data.decode()
 
-        if not data:
-            break
-        if data == b'exit':
-            print("exit", client_connection)
-            break
+            if not data:
+                break
+            if data == b'exit':
+                print("exit", client_connection)
+                break
+            else: # broadcast
+                inx = get_client_index(clients, client_connection)
+                sending_client_name = clients_names[idx]
 
-        # Below might be helpful for broadcasting:
-        # idx = get_client_index(clients, client_connection)
-        # sending_client_name = clients_names[idx]
+                for c in clients:  
+                    if c != client_connection: 
+                        # this version is used for testing purposes to differenciate messages from server/other clients
+                        c.sendall(("from other client(s) -> ").encode() + str.encode(client_msg))
+                        #c.sendall(str.encode(client_msg)
 
-        # for c in clients:
-        #     if c != client_connection:
-        #         c.send(sending_client_name + "->" + client_msg.encode())
+        except Exception as e:
+            print("Error: unable to receive message from client", e)
+
 
     # # find the client index then remove from both lists(client name list and connection list)
     idx = get_client_index(clients, client_connection)
@@ -88,6 +107,16 @@ def get_client_index(client_list, curr_client):
         idx = idx + 1
 
     return idx
+
+
+# Helper function for converting positions of player/chip to string/numeric
+def read_pos(str):
+    str = str.split(",")
+    return int(str[0], int(str[1]))
+
+
+def make_pos(tuple):
+    return str(tup[0] + "," + str(tup[1]))
 
 
 def main():
