@@ -16,6 +16,9 @@ BOWL_POSITION = SCREEN_X*0.25
 PLATE_LENGTH = SCREEN_X*0.2
 PLATE_HALF_POSITION = SCREEN_X*0.4
 CHIP_LENGTH = SCREEN_X*0.05
+MAX_SCORE = 30
+RARE_CHIP_VALUE = 3
+NORMAL_CHIP_VALUE = 1
 
 my_font = pygame.font.SysFont('Ariel', 30)
 screen = pygame.display.set_mode((SCREEN_X, SCREEN_X), pygame.HWSURFACE|pygame.DOUBLEBUF)
@@ -87,7 +90,8 @@ def mainMenu():
       pygame.display.update()
 
 def playGame():
-  while True:
+  gameIsRunning = True
+  while gameIsRunning:
     screen.fill((255, 255, 255))
     pygame.draw.rect(screen, (200, 200, 200), bowl)
 
@@ -116,7 +120,7 @@ def playGame():
     # Check for events (mouse clicks, closing window)
     for event in pygame.event.get():
       if event.type == pygame.QUIT:
-        playGame = False
+        gameIsRunning = False
 
       if event.type == pygame.MOUSEBUTTONDOWN:
         mousePos = pygame.mouse.get_pos()
@@ -155,9 +159,9 @@ def playGame():
 
           if c.state == STATE_CHIP_AVAIL:
             if c.type == CHIP_TYPE_BONUS:
-              p.score += 3
+              p.score += RARE_CHIP_VALUE
             else:
-              p.score += 1
+              p.score += NORMAL_CHIP_VALUE
             chips.remove(c)
             gameSystem.currChips -= 1
             del c
@@ -165,16 +169,24 @@ def playGame():
 
         else:
           p.state = STATE_PLATE_WONT_SCORE
+      
+      if p.score >= MAX_SCORE:
+        print("GAME OVER! Player " + str(plates.index(p)) + " has won!")
+        gameIsRunning = False
 
     # Draw chips and handle movement
     for c in chips:
       if (c.owner == PLAYER_ONE):
         mousePos = pygame.mouse.get_pos()
 
+        posX = mousePos[0] - CHIP_LENGTH / 2
+        posY = mousePos[1] - CHIP_LENGTH / 2
+
         c.rect = pygame.Rect(
-          mousePos[0] - CHIP_LENGTH / 2,
-          mousePos[1] - CHIP_LENGTH / 2,
+          posX,
+          posY,
           CHIP_LENGTH, CHIP_LENGTH)
+
       # if (c.owner == PLAYER_TWO):
       # if (c.owner == PLAYER_THREE):
       # if (c.owner == PLAYER_FOUR):
