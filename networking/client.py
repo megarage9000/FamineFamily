@@ -35,8 +35,6 @@ def connect_to_server(name, client_ip):
 
 def operate_server_requests(instruction):
     if instruction == socket_code.CONNECTION_ACK:
-        # TODO !!!!! DELETE !!!
-        # start_message_thread(socket_code.START)
         # TODO add functions to operate when join happens
         print("CLIENT SUCCESS JOIN")
     elif instruction == socket_code.START:
