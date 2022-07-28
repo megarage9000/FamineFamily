@@ -60,7 +60,7 @@ def mainMenu():
 
       MENU_MOUSE_POS = pygame.mouse.get_pos()
 
-      MENU_TEXT = my_font.render("MAIN MENU", True, "#b68f40")
+      MENU_TEXT = my_font.render("Main Menu", True, "#b68f40")
       MENU_RECT = MENU_TEXT.get_rect(center=(400, 100))
 
       PLAY_BUTTON = Button(image=pygame.image.load("assets/play.png"), pos=(400, 250), text_input="PLAY",
@@ -80,7 +80,8 @@ def mainMenu():
           sys.exit()
         if event.type == pygame.MOUSEBUTTONDOWN:
           if PLAY_BUTTON.checkForInput(MENU_MOUSE_POS):
-            playGame()
+            # playGame()
+            joinCreateRoomMenu()
           # if OPTIONS_BUTTON.checkForInput(MENU_MOUSE_POS):
           #   options()
           if QUIT_BUTTON.checkForInput(MENU_MOUSE_POS):
@@ -88,6 +89,84 @@ def mainMenu():
             sys.exit()
 
       pygame.display.update()
+
+def joinCreateRoomMenu():
+  while True:
+    screen.fill((255, 255, 255))
+    pygame.draw.rect(screen, (0, 0, 255), menuBG)
+
+    MENU_MOUSE_POS = pygame.mouse.get_pos()
+
+    MENU_TEXT = my_font.render("Join/Create Game Room", True, "#b68f40")
+    MENU_RECT = MENU_TEXT.get_rect(center=(400, 100))
+
+    JOIN_BUTTON = Button(image=pygame.image.load("assets/join.png"), pos=(400, 250), text_input="PLAY",
+                         font=my_font, base_color="#d7fcd4", hovering_color="White")
+
+    CREATE_BUTTON = Button(image=pygame.image.load("assets/createRoom.png"), pos=(400, 550), text_input="QUIT",
+                         font=my_font, base_color="#d7fcd4", hovering_color="White")
+
+    screen.blit(MENU_TEXT, MENU_RECT)
+
+    for button in [JOIN_BUTTON, CREATE_BUTTON]:
+      button.update(screen)
+
+    for event in pygame.event.get():
+      if event.type == pygame.QUIT:
+        pygame.quit()
+        sys.exit()
+      if event.type == pygame.MOUSEBUTTONDOWN:
+        if JOIN_BUTTON.checkForInput(MENU_MOUSE_POS):
+          joinRoom()
+        if CREATE_BUTTON.checkForInput(MENU_MOUSE_POS):
+          createRoom()
+
+    pygame.display.update()
+
+def joinRoom():
+  while True:
+    screen.fill((255, 255, 255))
+    pygame.draw.rect(screen, (0, 0, 255), menuBG)
+
+    MENU_MOUSE_POS = pygame.mouse.get_pos()
+
+    MENU_TEXT = my_font.render("Join an Existing Room", True, "#b68f40")
+    MENU_RECT = MENU_TEXT.get_rect(center=(400, 100))
+
+    # TODO: Add buttons
+
+    screen.blit(MENU_TEXT, MENU_RECT)
+
+    # TODO: add events in the loop to check for user input
+    for event in pygame.event.get():
+      if event.type == pygame.QUIT:
+        pygame.quit()
+        sys.exit()
+
+    pygame.display.update()
+
+
+def createRoom():
+  while True:
+    screen.fill((255, 255, 255))
+    pygame.draw.rect(screen, (0, 0, 255), menuBG)
+
+    MENU_MOUSE_POS = pygame.mouse.get_pos()
+
+    MENU_TEXT = my_font.render("Create a New Game Session", True, "#b68f40")
+    MENU_RECT = MENU_TEXT.get_rect(center=(400, 100))
+
+    # TODO: Add buttons
+
+    screen.blit(MENU_TEXT, MENU_RECT)
+
+    # TODO: add events in the loop to check for user input
+    for event in pygame.event.get():
+      if event.type == pygame.QUIT:
+        pygame.quit()
+        sys.exit()
+
+    pygame.display.update()
 
 def playGame():
   gameIsRunning = True
