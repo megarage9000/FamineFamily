@@ -124,6 +124,9 @@ def joinCreateRoomMenu():
     pygame.display.update()
 
 def joinRoom():
+  input_font = pygame.font.Font(None, 32)
+  user_text = 'cocka'
+
   while True:
     screen.fill((255, 255, 255))
     pygame.draw.rect(screen, (0, 0, 255), menuBG)
@@ -133,7 +136,11 @@ def joinRoom():
     MENU_TEXT = my_font.render("Join an Existing Room", True, "#b68f40")
     MENU_RECT = MENU_TEXT.get_rect(center=(400, 100))
 
-    # TODO: Add buttons
+    # TODO: Add buttons/text input
+    text_surface = input_font.render(user_text, True, (255, 255, 255))
+    text_rect = text_surface.get_rect(center=(400, 300))
+
+    screen.blit(text_surface, text_rect)
 
     screen.blit(MENU_TEXT, MENU_RECT)
 
