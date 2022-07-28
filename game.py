@@ -125,7 +125,10 @@ def joinCreateRoomMenu():
 
 def joinRoom():
   input_font = pygame.font.Font(None, 32)
-  user_text = 'cocka'
+  user_text = ''
+  input_rect = pygame.Rect(400, 300, 140, 32)
+  colour = pygame.Color('white')
+  active = False
 
   while True:
     screen.fill((255, 255, 255))
@@ -136,11 +139,16 @@ def joinRoom():
     MENU_TEXT = my_font.render("Join an Existing Room", True, "#b68f40")
     MENU_RECT = MENU_TEXT.get_rect(center=(400, 100))
 
+    ENTER_BUTTON = Button(image=pygame.image.load("assets/enter.png"), pos=(400, 550), text_input="QUIT",
+                           font=my_font, base_color="#d7fcd4", hovering_color="White")
+
+    ENTER_BUTTON.update(screen)
     # TODO: Add buttons/text input
     text_surface = input_font.render(user_text, True, (255, 255, 255))
-    text_rect = text_surface.get_rect(center=(400, 300))
-
-    screen.blit(text_surface, text_rect)
+    # text_rect = text_surface.get_rect(center=(400, 300))
+    pygame.draw.rect(screen, colour, input_rect, 2)
+    screen.blit(text_surface, (input_rect.x + 5, input_rect.y + 5))
+    input_rect.w = max(100, text_surface.get_width() + 10)
 
     screen.blit(MENU_TEXT, MENU_RECT)
 
@@ -149,6 +157,21 @@ def joinRoom():
       if event.type == pygame.QUIT:
         pygame.quit()
         sys.exit()
+
+      if event.type == pygame.MOUSEBUTTONDOWN:
+        if input_rect.collidepoint(MENU_MOUSE_POS):
+          active = True
+        elif ENTER_BUTTON.checkForInput(MENU_MOUSE_POS):
+          # TODO: implement enter button function via server...?
+          active = False
+        else:
+          active = False
+      if event.type == pygame.KEYDOWN:
+        if active == True:
+          if event.key == pygame.K_BACKSPACE:
+            user_text = user_text[:-1]
+          else:
+            user_text += event.unicode
 
     pygame.display.update()
 
@@ -255,7 +278,7 @@ def playGame():
 
         else:
           p.state = STATE_PLATE_WONT_SCORE
-      
+
       if p.score >= MAX_SCORE:
         print("GAME OVER! Player " + str(plates.index(p)) + " has won!")
         gameIsRunning = False
