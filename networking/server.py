@@ -3,26 +3,65 @@
 
 import socket
 import threading
+import socket_code
+from enum import Enum
 
-server = None
+
+class Game_State(Enum):
+    WAITING_FOR_START = 1,
+    START = 2,
+    END = 3,
+
+
+game_state_lock = threading.Lock()
+game_state = Game_State.WAITING_FOR_START
 HOST_NAME = socket.gethostname()
 HOST_ADDR = socket.gethostbyname(HOST_NAME)
 HOST_PORT = 8080
-client_name = " "
 clients = []
 clients_names = []
-MAX_CLIENTS = 5
+MAX_CLIENTS = 4
+
+
+def set_game_state(state):
+    global game_state
+    game_state_lock.acquire()
+    game_state = state
+    game_state_lock.release()
+
+
+def check_game_state(state):
+    global game_state
+    game_state_lock.acquire()
+    isState = game_state == state
+    game_state_lock.release()
+    return isState
 
 
 def start_server():
     print("Your local IP address is:", HOST_ADDR,
-          "Share this for people to join")
+          "\nShare this for people to join")
     try:
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server.bind((HOST_ADDR, HOST_PORT))
         server.listen(MAX_CLIENTS)  # Max number of connects
-        t = threading.Thread(target=accept_clients, args=(server,))
+
+        # thread to accept clients
+        t = threading.Thread(
+            target=accept_clients, args=(server,))
         t.start()
+
+        # server loop
+        while True:
+            global game_state
+            if (len(clients) == MAX_CLIENTS):
+                # TODO: put broadcast here - might be a good idea to kill the accept_client thread
+                print("REACHED MAX CLIENTS")
+
+            if (check_game_state(Game_State.START)):
+                # TODO: we can create threads to send stuff here - like chips
+                print("Game has started")
+
     except Exception as e:
         print("Error: unable to start thread", e)
 
@@ -31,46 +70,37 @@ def accept_clients(the_server):
     while True:
         client, addr = the_server.accept()
         clients.append(client)
-        print(clients_names)
-        # use a thread so as not to clog the gui thread
+
+        # each client has their own thread
         t = threading.Thread(
-            target=send_receive_client_message, args=(client, addr))
+            target=client_thread, args=(client, addr,))
         t.start()
-    # todo: have something to trigger to switching to listening mode and not accepting clients
 
 
-def send_receive_client_message(client_connection, client_ip_addr):
+def client_thread(client_connection, client_ip_addr):
     # Get client name from clients
     client_name = client_connection.recv(4096)
-    print(client_name.decode())
 
-    # Send a welcome message
-    message = "Welcome {}. Use 'exit' to quit".format(client_name.decode())
-    client_connection.send(message.encode())
+    t = threading.Thread(
+        target=send_to, args=(client_connection, socket_code.CONNECTION_ACK))
+    t.start()
 
     clients_names.append(client_name)
-    print(clients_names)
 
+    # Client listening thread
     while True:
         data = client_connection.recv(4096)
-        client_msg = data.decode()
-        print(client_msg)
 
         if not data:
             break
-        if data == b'exit':
-            print("exit", client_connection)
-            break
 
-        # Below might be helpful for broadcasting:
-        # idx = get_client_index(clients, client_connection)
-        # sending_client_name = clients_names[idx]
+        # first four bits are the instructions
+        instruction = data[:4]
 
-        # for c in clients:
-        #     if c != client_connection:
-        #         c.send(sending_client_name + "->" + client_msg.encode())
+        operate_client_requests(instruction)
 
-    # # find the client index then remove from both lists(client name list and connection list)
+    # find the client index then remove from both lists(client name list and connection list)
+    # TODO: POSSIBLE CONCURRENCY RACE CONDITION
     idx = get_client_index(clients, client_connection)
     del clients_names[idx]
     del clients[idx]
@@ -79,8 +109,28 @@ def send_receive_client_message(client_connection, client_ip_addr):
     client_connection.close()
 
 
-# Helper function to return the index of the current client in the list of clients
+def operate_client_requests(instruction):
+    if instruction == socket_code.CONNECTION_REQ:
+        # TODO add functions to operate when join happens
+        print("USER SENT JOIN")
+    elif instruction == socket_code.START:
+        # TODO add start functions to operate when join happens
+        set_game_state(Game_State.START)
+        print("USER SENT START")
+    else:
+        print("CODE NOT FOUND")
+
+# when we call broadcast, we need to put it on its own thread so it doesn't block
+# TODO: We can put the broadcast function on its own
+# def broadcast():
+
+
+def send_to(client_connection, message):
+    client_connection.send(message)
+
+
 def get_client_index(client_list, curr_client):
+    # Helper function to return the index of the current client in the list of clients
     idx = 0
     for conn in client_list:
         if conn == curr_client:
@@ -91,7 +141,6 @@ def get_client_index(client_list, curr_client):
 
 
 def main():
-    print("main")
     start_server()
 
 

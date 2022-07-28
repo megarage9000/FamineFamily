@@ -4,6 +4,7 @@
 
 import socket
 import threading
+import socket_code
 
 client = None
 HOST_PORT = 8080
@@ -17,6 +18,7 @@ def connect():
 
 
 def connect_to_server(name, client_ip):
+    global client
     try:
         client = socket.socket()
         client.connect((client_ip, HOST_PORT))
@@ -27,30 +29,52 @@ def connect_to_server(name, client_ip):
             target=receive_message_from_server, args=(client, "m"))
         t.start()
 
-        # create a thread to send messages
-        s = threading.Thread(
-            target=send_message_to_server, args=(client, "m"))
-        s.start()
     except Exception as e:
         print("error", e)
 
 
-def send_message_to_server(sck, m):
-    while True:
-        message = input("Message: ")
-        sck.send(message.encode())
+def operate_server_requests(instruction):
+    if instruction == socket_code.CONNECTION_ACK:
+        # TODO !!!!! DELETE !!!
+        # start_message_thread(socket_code.START)
+        # TODO add functions to operate when join happens
+        print("CLIENT SUCCESS JOIN")
+    elif instruction == socket_code.START:
+        # TODO add start functions to operate when join happens
+        print("SERVER - START")
+    else:
+        print("CODE NOT FOUND")
 
 
 def receive_message_from_server(sck, m):
     while True:
         from_server = sck.recv(4096)
+
         if not from_server:
             break
 
-        print("Server says: " + from_server.decode())
+        # first four bits are the instructions
+        instruction = from_server[:4]
+        operate_server_requests(instruction)
+        print(instruction)
 
     sck.close()
 
+
+def start_message_thread(message):
+    # Use this function in the game to send the strings to the server
+    # TODO: message should be a bitstring
+    global client
+    print(client)
+
+    s = threading.Thread(
+        target=send_message_to_server, args=(client, message))
+    s.start()
+
+
+def send_message_to_server(sck, m):
+    print(m)
+    sck.send(m)
 
 def main():
     connect()
