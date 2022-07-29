@@ -103,7 +103,7 @@ def joinCreateRoomMenu():
     JOIN_BUTTON = Button(image=pygame.image.load("assets/join.png"), pos=(400, 250), text_input="PLAY",
                          font=my_font, base_color="#d7fcd4", hovering_color="White")
 
-    CREATE_BUTTON = Button(image=pygame.image.load("assets/createRoom.png"), pos=(400, 550), text_input="QUIT",
+    CREATE_BUTTON = Button(image=pygame.image.load("assets/createRoom.png"), pos=(400, 550), text_input="CREATE",
                          font=my_font, base_color="#d7fcd4", hovering_color="White")
 
     screen.blit(MENU_TEXT, MENU_RECT)
@@ -126,7 +126,7 @@ def joinCreateRoomMenu():
 def joinRoom():
   input_font = pygame.font.Font(None, 32)
   user_text = ''
-  input_rect = pygame.Rect(400, 300, 140, 32)
+  input_rect = pygame.Rect(300, 300, 140, 32)
   colour = pygame.Color('white')
   active = False
 
@@ -139,16 +139,21 @@ def joinRoom():
     MENU_TEXT = my_font.render("Join an Existing Room", True, "#b68f40")
     MENU_RECT = MENU_TEXT.get_rect(center=(400, 100))
 
-    ENTER_BUTTON = Button(image=pygame.image.load("assets/enter.png"), pos=(400, 550), text_input="QUIT",
+    ENTER_BUTTON = Button(image=pygame.image.load("assets/enter.png"), pos=(400, 550), text_input="JOIN",
                            font=my_font, base_color="#d7fcd4", hovering_color="White")
 
-    ENTER_BUTTON.update(screen)
+    BACK_BUTTON = Button(image=pygame.image.load("assets/back.png"), pos=(100, 100), text_input="",
+                          font=my_font, base_color="#d7fcd4", hovering_color="White")
+
+    for button in [ENTER_BUTTON, BACK_BUTTON]:
+      button.update(screen)
+
     # TODO: Add buttons/text input
     text_surface = input_font.render(user_text, True, (255, 255, 255))
     # text_rect = text_surface.get_rect(center=(400, 300))
     pygame.draw.rect(screen, colour, input_rect, 2)
     screen.blit(text_surface, (input_rect.x + 5, input_rect.y + 5))
-    input_rect.w = max(100, text_surface.get_width() + 10)
+    input_rect.w = max(200, text_surface.get_width() + 10)
 
     screen.blit(MENU_TEXT, MENU_RECT)
 
@@ -164,6 +169,8 @@ def joinRoom():
         elif ENTER_BUTTON.checkForInput(MENU_MOUSE_POS):
           # TODO: implement enter button function via server...?
           active = False
+        elif BACK_BUTTON.checkForInput(MENU_MOUSE_POS):
+          joinCreateRoomMenu()
         else:
           active = False
       if event.type == pygame.KEYDOWN:
