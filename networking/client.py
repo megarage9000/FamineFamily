@@ -40,6 +40,9 @@ def operate_server_requests(instruction):
     elif instruction == socket_code.START:
         # TODO add start functions to operate when join happens
         print("SERVER - START")
+    elif instruction == socket_code.SPAWN_CHIP: 
+        # TODO add chip object when spawning happens
+        print("SERVER SPAWNED CHIP")
     else:
         print("CODE NOT FOUND")
 

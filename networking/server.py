@@ -15,6 +15,8 @@ class Game_State(Enum):
 
 game_state_lock = threading.Lock()
 game_state = Game_State.WAITING_FOR_START
+chips = []
+
 HOST_NAME = socket.gethostname()
 HOST_ADDR = socket.gethostbyname(HOST_NAME)
 HOST_PORT = 8080
@@ -117,12 +119,21 @@ def operate_client_requests(instruction):
         # TODO add start functions to operate when join happens
         set_game_state(Game_State.START)
         print("USER SENT START")
+    elif instruction == socket_code.CHIP_STATE_UPDATE: 
+        # TODO add function to broadcast state change to other players
+        print("CHIP STATE CHANGED")
+    elif instruction == socket_code.POS_UPDATE: 
+        # TODO add function for moving chip when position updates 
+        print("CHIP POSITION UPDATED")
     else:
         print("CODE NOT FOUND")
 
+
 # when we call broadcast, we need to put it on its own thread so it doesn't block
-# TODO: We can put the broadcast function on its own
-# def broadcast():
+def broadcast(client_connection, message):
+    for c in clients: 
+        if c != client_connection: 
+            c.sendall(message)
 
 
 def send_to(client_connection, message):
