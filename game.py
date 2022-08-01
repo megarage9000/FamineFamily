@@ -124,9 +124,9 @@ def joinCreateRoomMenu():
 
 
 def joinRoom():
-    input_font = pygame.font.Font(None, 32)
-    user_text = ''
-    input_rect = pygame.Rect(300, 400, 140, 32)
+    addr_font = pygame.font.Font(None, 32)
+    addr_text = ''
+    addr_rect = pygame.Rect(300, 400, 140, 32)
     colour = pygame.Color('white')
     addrActive = False
 
@@ -154,13 +154,13 @@ def joinRoom():
             button.update(screen)
 
         # TODO: Add buttons/text input
-        addr_surface = input_font.render(user_text, True, (255, 255, 255))
+        addr_surface = addr_font.render(addr_text, True, (255, 255, 255))
         name_surface = name_font.render(name_text, True, (255, 255, 255))
-        pygame.draw.rect(screen, colour, input_rect, 2)
+        pygame.draw.rect(screen, colour, addr_rect, 2)
         pygame.draw.rect(screen, colour, name_rect, 2)
-        screen.blit(addr_surface, (input_rect.x + 5, input_rect.y + 5))
+        screen.blit(addr_surface, (addr_rect.x + 5, addr_rect.y + 5))
         screen.blit(name_surface, (name_rect.x + 5, name_rect.y + 5))
-        input_rect.w = max(200, addr_surface.get_width() + 10)
+        addr_rect.w = max(200, addr_surface.get_width() + 10)
         name_rect.w = max(200, name_surface.get_width() + 10)
 
         screen.blit(MENU_TEXT, MENU_RECT)
@@ -172,7 +172,7 @@ def joinRoom():
                 sys.exit()
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if input_rect.collidepoint(MENU_MOUSE_POS):
+                if addr_rect.collidepoint(MENU_MOUSE_POS):
                     addrActive = True
                     nameActive = False
                     print("Candice dik fit in yo mouf")
@@ -182,7 +182,7 @@ def joinRoom():
                     print("sawcon dn")
                 elif ENTER_BUTTON.checkForInput(MENU_MOUSE_POS):
                     # TODO: implement enter button function via server...?
-                    print("gargalon deez nuts: " + user_text)
+                    print("gargalon deez nuts: " + addr_text)
                 elif BACK_BUTTON.checkForInput(MENU_MOUSE_POS):
                     joinCreateRoomMenu()
                 else:
@@ -191,19 +191,14 @@ def joinRoom():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
                     # TODO: implement enter button function via server...?
-                    print("ligma nuts in this server: " + user_text)
+                    print("ligma nuts in this server: " + addr_text)
                     print("booba cocka")
-                # if addrActive == True and event.key != pygame.K_RETURN:
-                #     if event.key == pygame.K_BACKSPACE:
-                #         user_text = user_text[:-1]
-                #     else:
-                #         user_text += event.unicode
                 if event.key != pygame.K_RETURN:
                     if addrActive == True and nameActive == False:
                         if event.key == pygame.K_BACKSPACE:
-                            user_text = user_text[:-1]
+                            addr_text = addr_text[:-1]
                         else:
-                            user_text += event.unicode
+                            addr_text += event.unicode
                     if nameActive == True and addrActive == False:
                         if event.key == pygame.K_BACKSPACE:
                             name_text = name_text[:-1]
@@ -212,6 +207,46 @@ def joinRoom():
 
         pygame.display.update()
 
+def joinedRoom(IPAddr, name):
+    listFont = pygame.font.Font(None, 32)
+    firstUser = name + " has joined.\n"
+    listText = firstUser + "\n Waiting for users...\n"
+    userList = [firstUser + "\n", "Waiting for users..."]
+    userListRect = pygame.Rect(300, 300, 200, 200)
+    colour = pygame.Color('white')
+
+    while True:
+        screen.fill((255, 255, 255))
+        pygame.draw.rect(screen, (0, 0, 255), menuBG)
+
+        MENU_MOUSE_POS = pygame.mouse.get_pos()
+
+        MENU_TEXT = my_font.render("In Room: " + IPAddr, True, "#b68f40")
+        MENU_RECT = MENU_TEXT.get_rect(center=(400, 100))
+
+        BACK_BUTTON = Button(image=pygame.image.load("assets/back.png"), pos=(100, 100), text_input="",
+                             font=my_font, base_color="#d7fcd4", hovering_color="White")
+
+        userSurface = listFont.render(listText, True, (255, 255, 255))
+        pygame.draw.rect(screen, colour, userListRect, 2)
+        screen.blit(userSurface, (userListRect.x + 5, userListRect.y + 5))
+        userListRect.w = max(400, userSurface.get_width() + 10)
+
+        BACK_BUTTON.update(screen)
+        screen.blit(MENU_TEXT, MENU_RECT)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            if event.type == pygame.KEYDOWN:
+                userList.insert(len(userList)-1, "Joe mama has joined.\n")
+                listText = ''
+                for x in userList:
+                    listText += x
+
+        pygame.display.update()
 
 def createRoom():
     input_font = pygame.font.Font(None, 32)
@@ -262,6 +297,7 @@ def createRoom():
                 if BACK_BUTTON.checkForInput(MENU_MOUSE_POS):
                     joinCreateRoomMenu()
                 if CREATE_BUTTON.checkForInput(MENU_MOUSE_POS):
+                    joinedRoom("69.420", user_text)
                     # TODO: start server room
                     print("Deez Nuts: " + user_text)
 
