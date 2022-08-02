@@ -144,6 +144,12 @@ def joinRoom():
         MENU_TEXT = my_font.render("Join an Existing Room", True, "#b68f40")
         MENU_RECT = MENU_TEXT.get_rect(center=(400, 100))
 
+        INPUT_NAME_TEXT = my_font.render("Screen Name", True, "#b68f40")
+        INPUT_NAME_RECT = INPUT_NAME_TEXT.get_rect(center=(400, 225))
+
+        INPUT_ADDR_TEXT = my_font.render("IP Address", True, "#b68f40")
+        INPUT_ADDR_RECT = INPUT_ADDR_TEXT.get_rect(center=(400, 375))
+
         ENTER_BUTTON = Button(image=pygame.image.load("assets/enter.png"), pos=(400, 550), text_input="JOIN",
                               font=my_font, base_color="#d7fcd4", hovering_color="White")
 
@@ -164,6 +170,8 @@ def joinRoom():
         name_rect.w = max(200, name_surface.get_width() + 10)
 
         screen.blit(MENU_TEXT, MENU_RECT)
+        screen.blit(INPUT_NAME_TEXT, INPUT_NAME_RECT)
+        screen.blit(INPUT_ADDR_TEXT, INPUT_ADDR_RECT)
 
         # TODO: add events in the loop to check for user input
         for event in pygame.event.get():
