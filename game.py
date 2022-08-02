@@ -251,8 +251,11 @@ def joinedRoom(IPAddr, name):
                 elif BACK_BUTTON.checkForInput(MENU_MOUSE_POS):
                     joinCreateRoomMenu()
             if event.type == pygame.KEYDOWN:
-                userList.insert(len(userList)-1, "Joe mama has joined.\n")
-                listText = "There are " + str(len(userList) - 1) + " users logged in. Waiting for users..."
+                if len(userList) >= 5: # one extra for the placeholder "Waiting for users..." string in List
+                    listText = "You've reached max capacity. Click Start to begin."
+                else:
+                    userList.insert(len(userList)-1, "Joe mama has joined.\n")
+                    listText = "There are " + str(len(userList) - 1) + " users logged in. Waiting for users..."
 
         pygame.display.update()
 
