@@ -40,6 +40,9 @@ def check_game_state(state):
     return isState
 
 
+def get_IP():
+    return HOST_ADDR
+
 def start_server():
     print("Your local IP address is:", HOST_ADDR,
           "\nShare this for people to join")
@@ -157,8 +160,8 @@ def get_client_index(client_list, curr_client):
     return idx
 
 
-def main():
-    start_server()
+# def main():
+#     start_server()
 
 
-main()
+# main()

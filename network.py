@@ -3,12 +3,12 @@ import threading
 import socket_code
 
 class Network: 
-    def __init__(self): 
+    def __init__(self, username, address):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server = "127.0.1.1"
+        self.server = address
         self.port = 8080
         self.addr = (self.server, self.port)
-        self.player = self.connect()
+        self.player = self.connect(username, address)
 
     def operate_server_requests(self, instruction):
         if instruction == socket_code.CONNECTION_ACK:
@@ -51,8 +51,9 @@ class Network:
         s.start()
 
     def connect_to_server(self, name):
+        print("connecting to server ", self.server)
         try:
-            self.client.connect(self.addr)
+            self.client.connect((self.server, self.port))
             self.client.send(name.encode())  # Send username to server
 
             # create thread to receive messages from server
@@ -63,10 +64,9 @@ class Network:
         except Exception as e:
             print("error connecting to server: ", e)
     
-    def connect(self): 
+    def connect(self, username, address):
         # todo - pass in username + client from ui
-        username = input("Enter Username: ")
-        self.server = input("Enter IP address to connect to: ")
+        self.server = address
         self.connect_to_server(username)
 
 
