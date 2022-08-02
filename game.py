@@ -5,6 +5,7 @@ from gameSystem import GameSystem
 from chip import Chip
 from plate import Plate
 from Button import Button
+from network import Network
 
 pygame.init()
 
@@ -53,40 +54,49 @@ playGame = False
 mainMenu = True
 
 
+# network connection
+def connect(): 
+  global n
+  n = Network()
+  return n.player
+
+
 def mainMenu():
-    while True:
-        screen.fill((255, 255, 255))
-        pygame.draw.rect(screen, (0, 0, 255), menuBG)
+  p = connect()
 
-        MENU_MOUSE_POS = pygame.mouse.get_pos()
+  while True:
+    screen.fill((255, 255, 255))
+    pygame.draw.rect(screen, (0, 0, 255), menuBG)
 
-        MENU_TEXT = my_font.render("Main Menu", True, "#b68f40")
-        MENU_RECT = MENU_TEXT.get_rect(center=(400, 100))
+    MENU_MOUSE_POS = pygame.mouse.get_pos()
 
-        PLAY_BUTTON = Button(image=pygame.image.load("assets/play.png"), pos=(400, 250), text_input="PLAY",
-                             font=my_font, base_color="#d7fcd4", hovering_color="White")
+    MENU_TEXT = my_font.render("Main Menu", True, "#b68f40")
+    MENU_RECT = MENU_TEXT.get_rect(center=(400, 100))
 
-        QUIT_BUTTON = Button(image=pygame.image.load("assets/stop.png"), pos=(400, 550), text_input="QUIT",
-                             font=my_font, base_color="#d7fcd4", hovering_color="White")
+    PLAY_BUTTON = Button(image=pygame.image.load("assets/play.png"), pos=(400, 250), text_input="PLAY",
+                          font=my_font, base_color="#d7fcd4", hovering_color="White")
 
-        screen.blit(MENU_TEXT, MENU_RECT)
+    QUIT_BUTTON = Button(image=pygame.image.load("assets/stop.png"), pos=(400, 550), text_input="QUIT",
+                          font=my_font, base_color="#d7fcd4", hovering_color="White")
 
-        for button in [PLAY_BUTTON, QUIT_BUTTON]:
-            button.update(screen)
+    screen.blit(MENU_TEXT, MENU_RECT)
 
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+    for button in [PLAY_BUTTON, QUIT_BUTTON]:
+        button.update(screen)
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if PLAY_BUTTON.checkForInput(MENU_MOUSE_POS):
+                # playGame()
+                joinCreateRoomMenu()
+            if QUIT_BUTTON.checkForInput(MENU_MOUSE_POS):
                 pygame.quit()
                 sys.exit()
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if PLAY_BUTTON.checkForInput(MENU_MOUSE_POS):
-                    # playGame()
-                    joinCreateRoomMenu()
-                if QUIT_BUTTON.checkForInput(MENU_MOUSE_POS):
-                    pygame.quit()
-                    sys.exit()
 
-        pygame.display.update()
+    pygame.display.update()
 
 
 def joinCreateRoomMenu():

@@ -69,37 +69,43 @@ def start_server():
 
 
 def accept_clients(the_server):
-    while True:
-        client, addr = the_server.accept()
-        clients.append(client)
+    try: 
+        while True:
+            client, addr = the_server.accept()
+            clients.append(client)
 
-        # each client has their own thread
-        t = threading.Thread(
-            target=client_thread, args=(client, addr,))
-        t.start()
+            # each client has their own thread
+            t = threading.Thread(
+                target=client_thread, args=(client, addr,))
+            t.start()
+    except Exception as e: 
+        print("Error: unable to accept client connection", e)
 
 
 def client_thread(client_connection, client_ip_addr):
-    # Get client name from clients
-    client_name = client_connection.recv(4096)
+    try: 
+        # Get client name from clients
+        client_name = client_connection.recv(4096)
 
-    t = threading.Thread(
-        target=send_to, args=(client_connection, socket_code.CONNECTION_ACK))
-    t.start()
+        t = threading.Thread(
+            target=send_to, args=(client_connection, socket_code.CONNECTION_ACK))
+        t.start()
 
-    clients_names.append(client_name)
+        clients_names.append(client_name)
 
-    # Client listening thread
-    while True:
-        data = client_connection.recv(4096)
+        # Client listening thread
+        while True:
+            data = client_connection.recv(4096)
 
-        if not data:
-            break
+            if not data:
+                break
 
-        # first four bits are the instructions
-        instruction = data[:4]
+            # first four bits are the instructions
+            instruction = data[:4]
 
-        operate_client_requests(instruction)
+            operate_client_requests(instruction)
+    except Exception as e: 
+        print("Error: unable to create client thread", e)
 
     # find the client index then remove from both lists(client name list and connection list)
     # TODO: POSSIBLE CONCURRENCY RACE CONDITION
