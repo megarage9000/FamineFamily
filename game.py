@@ -210,9 +210,9 @@ def joinRoom():
 def joinedRoom(IPAddr, name):
     listFont = pygame.font.Font(None, 32)
     firstUser = name + " has joined.\n"
-    listText = firstUser + "\n Waiting for users...\n"
-    userList = [firstUser + "\n", "Waiting for users..."]
-    userListRect = pygame.Rect(300, 300, 200, 200)
+    userList = [firstUser, "Waiting for users..."]
+    listText = "There are " + str(len(userList) - 1) + " users logged in. Waiting for users..."
+    userListRect = pygame.Rect(150, 300, 140, 32)
     colour = pygame.Color('white')
 
     while True:
@@ -227,12 +227,16 @@ def joinedRoom(IPAddr, name):
         BACK_BUTTON = Button(image=pygame.image.load("assets/back.png"), pos=(100, 100), text_input="",
                              font=my_font, base_color="#d7fcd4", hovering_color="White")
 
+        BEGIN_BUTTON = Button(image=pygame.image.load("assets/begin.png"), pos=(400, 550), text_input="",
+                               font=my_font, base_color="#d7fcd4", hovering_color="White")
+
         userSurface = listFont.render(listText, True, (255, 255, 255))
         pygame.draw.rect(screen, colour, userListRect, 2)
         screen.blit(userSurface, (userListRect.x + 5, userListRect.y + 5))
         userListRect.w = max(400, userSurface.get_width() + 10)
 
         BACK_BUTTON.update(screen)
+        BEGIN_BUTTON.update(screen)
         screen.blit(MENU_TEXT, MENU_RECT)
 
         for event in pygame.event.get():
@@ -240,11 +244,15 @@ def joinedRoom(IPAddr, name):
                 pygame.quit()
                 sys.exit()
 
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if BEGIN_BUTTON.checkForInput(MENU_MOUSE_POS):
+                    # TODO: start game, linked with server
+                    print("kind chin")
+                elif BACK_BUTTON.checkForInput(MENU_MOUSE_POS):
+                    joinCreateRoomMenu()
             if event.type == pygame.KEYDOWN:
                 userList.insert(len(userList)-1, "Joe mama has joined.\n")
-                listText = ''
-                for x in userList:
-                    listText += x
+                listText = "There are " + str(len(userList) - 1) + " users logged in. Waiting for users..."
 
         pygame.display.update()
 
