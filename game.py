@@ -61,8 +61,6 @@ startButton = pygame.Rect(BUTTON_WIDTH, BUTTON_WIDTH,
 playGame = False
 mainMenu = True
 
-playerConnection = None
-
 # network connection
 
 
@@ -143,7 +141,6 @@ def joinCreateRoomMenu():
 
 
 def joinRoom():
-    global playerConnection
 
     addr_font = pygame.font.Font(None, 32)
     addr_text = ''
@@ -210,7 +207,7 @@ def joinRoom():
                     nameActive = True
                     print("sawcon dn")
                 elif ENTER_BUTTON.checkForInput(MENU_MOUSE_POS):
-                    playerConnection = connect(name_text, addr_text)
+                    connect(name_text, addr_text)
                     print("gargalon deez nuts: " + addr_text)
                     joinedRoom(addr_text, name_text)
                 elif BACK_BUTTON.checkForInput(MENU_MOUSE_POS):
@@ -222,7 +219,7 @@ def joinRoom():
                 if event.key == pygame.K_RETURN:
                     # TODO: implement enter button function via server...?
                     print("ligma nuts in this server: " + addr_text)
-                    playerConnection = connect(name_text, addr_text)
+                    connect(name_text, addr_text)
                     joinedRoom(addr_text, name_text)
                 if event.key != pygame.K_RETURN:
                     if addrActive == True and nameActive == False:
@@ -240,7 +237,7 @@ def joinRoom():
 
 
 def joinedRoom(IPAddr, name):
-    global playerConnection
+    global n
     listFont = pygame.font.Font(None, 32)
     firstUser = name + " has joined.\n"
     userList = [firstUser, "Waiting for users..."]
@@ -297,7 +294,6 @@ def joinedRoom(IPAddr, name):
 
 
 def createRoom():
-    global playerConnection
     input_font = pygame.font.Font(None, 32)
     user_text = ''
     input_rect = pygame.Rect(300, 300, 140, 32)
@@ -359,7 +355,7 @@ def createRoom():
                     while (check_game_state(Game_State.SERVER_NOT_STARTED)):
                         pass
 
-                    playerConnection = connect(user_text, IP)
+                    connect(user_text, IP)
 
                     joinedRoom(IP, user_text)
 
@@ -377,7 +373,7 @@ def createRoom():
                     while (check_game_state(Game_State.SERVER_NOT_STARTED)):
                         pass
 
-                    playerConnection = connect(user_text, IP)
+                    connect(user_text, IP)
                     joinedRoom(IP, user_text)
                 if active == True and event.key != pygame.K_RETURN:
                     if event.key == pygame.K_BACKSPACE:
