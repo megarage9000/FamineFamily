@@ -9,14 +9,18 @@ class Network:
         self.port = 8080
         self.addr = (self.server, self.port)
         self.player = self.connect(username, address)
+        self.currentPlayers = 0
 
-    def operate_server_requests(self, instruction):
+    def operate_server_requests(self, instruction, data):
         if instruction == socket_code.CONNECTION_ACK:
             # TODO add functions to operate when join happens
             print("CLIENT SUCCESS JOIN")
         elif instruction == socket_code.START:
             # TODO add start functions to operate when join happens
             print("SERVER - START")
+        elif instruction == socket_code.USER_COUNT:
+            print("SERVER - USER JOIN", data)
+            self.currentPlayers = data
         elif instruction == socket_code.SPAWN_CHIP: 
             # TODO add chip object when spawning happens
             print("SERVER SPAWNED CHIP")
@@ -32,7 +36,8 @@ class Network:
 
             # first four bits are the instructions
             instruction = from_server[:4]
-            self.operate_server_requests(instruction)
+            data = from_server[4:]
+            self.operate_server_requests(instruction, data.decode())
             print(instruction)
 
         self.client.close()
