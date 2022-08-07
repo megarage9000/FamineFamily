@@ -1,6 +1,10 @@
 import socket
 import threading
 import socket_code
+from signal import signal, SIGPIPE, SIG_IGN
+import pygame
+
+signal(SIGPIPE, SIG_IGN)
 
 class Network: 
     def __init__(self, username, address):
@@ -10,22 +14,49 @@ class Network:
         self.addr = (self.server, self.port)
         self.player = self.connect(username, address)
         self.currentPlayers = 0
+        self.score = 0
+        self.client_id = -1
 
     def operate_server_requests(self, instruction, data):
+        print("SERVER INS: ")
+        print(instruction)
         if instruction == socket_code.CONNECTION_ACK:
             # TODO add functions to operate when join happens
             print("CLIENT SUCCESS JOIN")
+
         elif instruction == socket_code.START:
             # TODO add start functions to operate when join happens
             print("SERVER - START")
-        elif instruction == socket_code.USER_COUNT:
-            print("SERVER - USER JOIN", data)
-            self.currentPlayers = data
+
+        elif instruction.startswith(socket_code.USER_COUNT):
+            user_count = data.replace(socket_code.USER_COUNT, b'')
+            print("SERVER - USER JOIN", user_count)
+            self.currentPlayers = user_count
+
         elif instruction == socket_code.SPAWN_CHIP: 
             # TODO add chip object when spawning happens
             print("SERVER SPAWNED CHIP")
+
+        elif instruction.startswith(socket_code.CLIENT_ID): 
+            self.client_id = instruction.replace(socket_code.CLIENT_ID, b'')
+
+        elif instruction == socket_code.CHIP_POS_UPDATE: 
+            position = data.replace(socket_code.CHIP_POS_UPDATE, b'')
+            # TODO handle chip pos on the client/ui side 
+            print("Client: got broadcasted chip pos from server " + position.decode())
+        
+        elif instruction.startswith(socket_code.CHIP_STATE_UPDATE): 
+            new_state = data.replace(socket_code.CHIP_STATE_UPDATE, b'')
+            print("Client: got broadcasted chip state from server " + new_state.decode())
+
+        elif instruction.startswith(socket_code.ANNOUNCE_WINNER): 
+            winner_id = data.replace(socket_code.ANNOUNCE_WINNER, b'')
+            # TODO handle winner annoucement in ui
+
         else:
-            print("CODE NOT FOUND")
+            # print("INSTRUCTION NOT FOUND")
+            # print(instruction)
+            pass
     
     def receive_message_from_server(self, m):
         while True:
@@ -36,15 +67,22 @@ class Network:
 
             # first four bits are the instructions
             instruction = from_server[:4]
-            data = from_server[4:]
-            self.operate_server_requests(instruction, data.decode())
-            print(instruction)
+            data = from_server
+            self.operate_server_requests(instruction, data)
+            print("Client: message received from server", data.decode())
 
-        self.client.close()
+        # self.client.close()
 
     def send_message_to_server(self, m):
         print(m)
-        self.client.send(m)
+        try: 
+            if (type(m) == str): 
+                self.client.send(m.encode())
+
+            self.client.send(m)
+        except Exception as e: 
+            print("Error: unable to send message to server in client thread", e)
+    
 
     def start_message_thread(self, m):
         # Use this function in the game to send the strings to the server
@@ -74,6 +112,6 @@ class Network:
         self.server = address
         self.connect_to_server(username)
 
-
-
+    def disconnect(self): 
+        self.client.close()
 
