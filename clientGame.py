@@ -1,10 +1,13 @@
 import sys, pygame
 import random
+import threading
+from threadObjectTemplates import ChipScoreTemplate, ChipTemplate
 from constants import *
 from gameSystem import GameSystem
 from chip import Chip
 from plate import Plate
 from Button import Button
+from time import sleep
 
 pygame.init()
 
@@ -22,7 +25,6 @@ NORMAL_CHIP_VALUE = 1
 
 my_font = pygame.font.SysFont('Ariel', 30)
 screen = pygame.display.set_mode((SCREEN_X, SCREEN_X), pygame.HWSURFACE|pygame.DOUBLEBUF)
-gameSystem = GameSystem()
 
 menuScreen = pygame.display.set_mode((SCREEN_X, SCREEN_X), pygame.HWSURFACE|pygame.DOUBLEBUF)
 
@@ -51,6 +53,45 @@ startButton = pygame.Rect(BUTTON_WIDTH, BUTTON_WIDTH, BUTTON_LENGTH, BUTTON_LENG
 # Game loop
 playGame = False
 mainMenu = True
+
+chipSpawnQueue = []
+chipScoreQueue = []
+chipMoveQueue = []
+
+def threadTest():
+  while True:
+    sleep(1)
+    if len(chipSpawnQueue) < 15:
+      randomChipPosX = BOWL_POSITION + 0.01 * random.randint(2, 88) * BOWL_LENGTH
+      randomChipPosY = BOWL_POSITION + 0.01 * random.randint(2, 88) * BOWL_LENGTH
+      superDoritoChance = random.randint(1,100)
+      chipType = None
+
+      if superDoritoChance > 80: 
+        chipType = CHIP_TYPE_BONUS
+      else:
+        chipType = CHIP_TYPE_NORMAL
+
+      chipSpawnQueue.append(ChipTemplate(randomChipPosX, randomChipPosY, chipType))
+
+    if len(chipScoreQueue) > 0:
+      chipScoreTemplate = chipScoreQueue.pop()
+      
+      if chipScoreTemplate.player == PLAYER_ONE:
+        plates[0].score += chipScoreTemplate.value
+      elif chipScoreTemplate.player == PLAYER_TWO:
+        plates[1].score += chipScoreTemplate.value
+      elif chipScoreTemplate.player == PLAYER_THREE:
+        plates[2].score += chipScoreTemplate.value
+      elif chipScoreTemplate.player == PLAYER_FOUR:
+        plates[3].score += chipScoreTemplate.value
+
+      if chipScoreTemplate.chip in chips:
+        chips.remove(chipScoreTemplate.chip)
+        del(chipScoreTemplate.chip)
+
+    if len(chipMoveQueue) > 0:
+      chipMoveTemplate = chipMoveQueue.pop()
 
 
 def mainMenu():
@@ -91,31 +132,14 @@ def mainMenu():
 
 def playGame():
   gameIsRunning = True
+
+  t = threading.Thread(
+    target=threadTest)
+  t.start()
+
   while gameIsRunning:
     screen.fill((255, 255, 255))
     pygame.draw.rect(screen, (200, 200, 200), bowl)
-
-    # Check for events (mouse clicks, closing window)
-    for event in pygame.event.get():
-      if event.type == pygame.QUIT:
-        pygame.quit()
-        sys.exit()
-
-      if event.type == pygame.MOUSEBUTTONDOWN:
-        mousePos = pygame.mouse.get_pos()
-        for c in chips:
-          if c.rect.collidepoint(mousePos[0], mousePos[1]):
-            c.state = STATE_CHIP_PICKED
-            c.owner = PLAYER_ONE
-            break
-
-      if event.type == pygame.MOUSEBUTTONUP:
-        mousePos = pygame.mouse.get_pos()
-        for c in chips:
-          if c.rect.collidepoint(mousePos[0], mousePos[1]):
-            c.state = STATE_CHIP_AVAIL
-            c.owner = PLAYER_NONE
-            break
 
     # Check for events (mouse clicks, closing window)
     for event in pygame.event.get():
@@ -138,37 +162,70 @@ def playGame():
             c.owner = PLAYER_NONE
             break
 
-    # Spawn chips
-    if gameSystem.attemptChipSpawn() == True:
-      randomChipPosX = BOWL_POSITION + 0.01 * random.randint(2, 88) * BOWL_LENGTH
-      randomChipPosY = BOWL_POSITION + 0.01 * random.randint(2, 88) * BOWL_LENGTH
+    if len(chipSpawnQueue) > 0:
+      chipTemplate = chipSpawnQueue.pop()
       chipRect = pygame.Rect(
-        randomChipPosX,
-        randomChipPosY,
+        chipTemplate.x,
+        chipTemplate.y,
         CHIP_LENGTH, CHIP_LENGTH)
 
-      chips.append(Chip(chipRect, CHIP_TYPE_NORMAL))
+      chips.append(Chip(chipRect, chipTemplate.type))
+
+    # Spawn chips
+    # if gameSystem.attemptChipSpawn() == True:
+    #   randomChipPosX = BOWL_POSITION + 0.01 * random.randint(2, 88) * BOWL_LENGTH
+    #   randomChipPosY = BOWL_POSITION + 0.01 * random.randint(2, 88) * BOWL_LENGTH
+    #   chipRect = pygame.Rect(
+    #     randomChipPosX,
+    #     randomChipPosY,
+    #     CHIP_LENGTH, CHIP_LENGTH)
+
+    #   chips.append(Chip(chipRect))
 
     # Draw plates and check for chips dropped on plate, if so handle chip and score
     for p in plates:
       pygame.draw.rect(screen, p.getColor(), p)
 
+      chipIsOnPlate = False
       for c in chips:
         if p.rect.colliderect(c.rect):
+          chipIsOnPlate = True
           p.state = STATE_PLATE_CAN_SCORE
 
           if c.state == STATE_CHIP_AVAIL:
-            if c.type == CHIP_TYPE_BONUS:
-              p.score += RARE_CHIP_VALUE
-            else:
-              p.score += NORMAL_CHIP_VALUE
-            chips.remove(c)
-            gameSystem.currChips -= 1
-            del c
-          break
+            playerPlate = None
+            if p == plates[0]:
+              playerPlate = PLAYER_ONE
+            elif p == plates[1]:
+              playerPlate = PLAYER_TWO
+            elif p == plates[2]:
+              playerPlate = PLAYER_THREE
+            elif p == plates[3]:
+              playerPlate = PLAYER_FOUR
 
-        else:
-          p.state = STATE_PLATE_WONT_SCORE
+            chipValue = 0
+            if c.type == CHIP_TYPE_NORMAL:
+              chipValue = 1
+            elif c.type == CHIP_TYPE_BONUS:
+              chipValue = 3
+
+            chipScoreQueue.append(ChipScoreTemplate(c, chipValue, playerPlate))
+            chips.remove(c)
+            del(c)
+            break
+
+
+          # if c.state == STATE_CHIP_AVAIL:
+          #   if c.type == CHIP_TYPE_BONUS:
+          #     p.score += RARE_CHIP_VALUE
+          #   else:
+          #     p.score += NORMAL_CHIP_VALUE
+          #   chips.remove(c)
+          #   gameSystem.currChips -= 1
+          #   del c
+          # break
+
+      if not chipIsOnPlate: p.state = STATE_PLATE_WONT_SCORE
       
       if p.score >= MAX_SCORE:
         print("GAME OVER! Player " + str(plates.index(p)) + " has won!")
@@ -192,7 +249,7 @@ def playGame():
       # if (c.owner == PLAYER_FOUR):
       pygame.draw.rect(screen, c.getColor(), c.rect)
 
-    print("Chips: " + str(len(chips)))
+    # print("Chips: " + str(len(chips)))
 
     # Create score objects
     playerOneScore = my_font.render(str(plates[0].score), True, (0, 0, 0))
