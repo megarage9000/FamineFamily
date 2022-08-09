@@ -6,26 +6,31 @@ import pygame
 
 signal(SIGPIPE, SIG_IGN)
 
-class Network: 
-    def __init__(self, username, address):
+
+class Network:
+    def __init__(self, username, address, isHost=False):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server = address
         self.port = 8080
         self.addr = (self.server, self.port)
-        self.player = self.connect(username, address)
+        self.player = self.connect(username, address, isHost)
         self.currentPlayers = 0
         self.score = 0
         self.client_id = -1
+        self.isHost = isHost
+        self.isGameStart = False
 
     def operate_server_requests(self, instruction, data):
         print("SERVER INS: ")
         print(instruction)
         if instruction == socket_code.CONNECTION_ACK:
             # TODO add functions to operate when join happens
-            print("CLIENT SUCCESS JOIN")
+            self.client_id = data.replace(
+                socket_code.CONNECTION_ACK, b'').decode()
+            print("CLIENT SUCCESS JOIN", id)
 
         elif instruction == socket_code.START:
-            # TODO add start functions to operate when join happens
+            self.isGameStart = True
             print("SERVER - START")
 
         elif instruction.startswith(socket_code.USER_COUNT):
@@ -33,23 +38,24 @@ class Network:
             print("SERVER - USER JOIN", user_count)
             self.currentPlayers = user_count
 
-        elif instruction == socket_code.SPAWN_CHIP: 
+        elif instruction == socket_code.SPAWN_CHIP:
             # TODO add chip object when spawning happens
             print("SERVER SPAWNED CHIP")
 
-        elif instruction.startswith(socket_code.CLIENT_ID): 
+        elif instruction.startswith(socket_code.CLIENT_ID):
             self.client_id = instruction.replace(socket_code.CLIENT_ID, b'')
 
-        elif instruction == socket_code.CHIP_POS_UPDATE: 
+        elif instruction == socket_code.CHIP_POS_UPDATE:
             position = data.replace(socket_code.CHIP_POS_UPDATE, b'')
-            # TODO handle chip pos on the client/ui side 
+            # TODO handle chip pos on the client/ui side
             print("Client: got broadcasted chip pos from server " + position.decode())
-        
-        elif instruction.startswith(socket_code.CHIP_STATE_UPDATE): 
-            new_state = data.replace(socket_code.CHIP_STATE_UPDATE, b'')
-            print("Client: got broadcasted chip state from server " + new_state.decode())
 
-        elif instruction.startswith(socket_code.ANNOUNCE_WINNER): 
+        elif instruction.startswith(socket_code.CHIP_STATE_UPDATE):
+            new_state = data.replace(socket_code.CHIP_STATE_UPDATE, b'')
+            print("Client: got broadcasted chip state from server " +
+                  new_state.decode())
+
+        elif instruction.startswith(socket_code.ANNOUNCE_WINNER):
             winner_id = data.replace(socket_code.ANNOUNCE_WINNER, b'')
             # TODO handle winner annoucement in ui
 
@@ -57,7 +63,7 @@ class Network:
             # print("INSTRUCTION NOT FOUND")
             # print(instruction)
             pass
-    
+
     def receive_message_from_server(self, m):
         while True:
             from_server = self.client.recv(4096)
@@ -75,14 +81,13 @@ class Network:
 
     def send_message_to_server(self, m):
         print(m)
-        try: 
-            if (type(m) == str): 
+        try:
+            if (type(m) == str):
                 self.client.send(m.encode())
 
             self.client.send(m)
-        except Exception as e: 
+        except Exception as e:
             print("Error: unable to send message to server in client thread", e)
-    
 
     def start_message_thread(self, m):
         # Use this function in the game to send the strings to the server
@@ -90,7 +95,7 @@ class Network:
         print(self.client)
 
         s = threading.Thread(
-            target = self.send_message_to_server, args=(m))
+            target=self.send_message_to_server, args=(m))
         s.start()
 
     def connect_to_server(self, name):
@@ -101,17 +106,16 @@ class Network:
 
             # create thread to receive messages from server
             t = threading.Thread(
-                target = self.receive_message_from_server, args=("m"))
+                target=self.receive_message_from_server, args=("m"))
             t.start()
 
         except Exception as e:
             print("error connecting to server: ", e)
-    
+
     def connect(self, username, address):
         # todo - pass in username + client from ui
         self.server = address
         self.connect_to_server(username)
 
-    def disconnect(self): 
+    def disconnect(self):
         self.client.close()
-

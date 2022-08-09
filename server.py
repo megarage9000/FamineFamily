@@ -74,7 +74,8 @@ def start_server():
 
             if (check_game_state(Game_State.START)):
                 # TODO: we can create threads to send stuff here - like chips
-                print("Game has started")
+                # print("Game has started")
+                break
 
     except Exception as e:
         print("Error: unable to start thread", e)
@@ -86,6 +87,7 @@ def accept_clients(the_server):
             if len(clients) < MAX_CLIENTS: 
                 client, addr = the_server.accept()
                 clients.append(client)
+                client_number = len(clients)
 
                 # broadcast that someone joined!
                 s = threading.Thread(
@@ -94,19 +96,19 @@ def accept_clients(the_server):
 
                 # each client has their own thread
                 t = threading.Thread(
-                    target=client_thread, args=(client, addr))
+                    target=client_thread, args=(client, client_number))
                 t.start()
     except Exception as e:
         print("Error: unable to accept client connection", e)
 
 
-def client_thread(client_connection, client_ip_addr):
+def client_thread(client_connection, client_number):
     try:
         # Get client name from clients
         client_name = client_connection.recv(4096)
 
         t = threading.Thread(
-            target=send_to, args=(client_connection, socket_code.CONNECTION_ACK))
+            target=send_to, args=(client_connection, socket_code.CONNECTION_ACK + str(client_number).encode()))
         t.start()
 
         clients_names.append(client_name)
@@ -142,10 +144,10 @@ def operate_client_requests(instruction, data):
         # TODO add functions to operate when join happens
         print("USER SENT JOIN")
 
-    elif instruction == socket_code.START:
-        # TODO add start functions to operate when join happens
+    elif instruction.startswith(socket_code.START):
         set_game_state(Game_State.START)
-        print("USER SENT START")
+        broadcast(clients, socket_code.START, b'')
+        print("Server: game start")
 
     elif instruction.startswith(socket_code.CHIP_POS_UPDATE):
         position = data.replace(socket_code.CHIP_POS_UPDATE, b'')
