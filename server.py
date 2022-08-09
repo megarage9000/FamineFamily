@@ -167,7 +167,7 @@ def operate_client_requests(instruction, data):
     elif instruction.startswith(socket_code.SPAWN_CHIP): 
         position = data.replace(socket_code.SPAWN_CHIP, b'')
         print("Server: spawning chip at " + position.decode())
-        broadcast(clients, socket_code.SPAWN_CHIP, position) # broadcast updated position
+        broadcast(clients, socket_code.SPAWN_CHIP, position)
 
     else:
         # print("INSTRUCTION NOT FOUND")

@@ -53,8 +53,7 @@ class Network:
 
         elif instruction.startswith(socket_code.CHIP_STATE_UPDATE):
             new_state = data.replace(socket_code.CHIP_STATE_UPDATE, b'')
-            print("Client: got broadcasted chip state from server " +
-                  new_state.decode())
+            print("Client: got broadcasted chip state from server " + new_state.decode())
 
         elif instruction.startswith(socket_code.ANNOUNCE_WINNER):
             winner_id = data.replace(socket_code.ANNOUNCE_WINNER, b'')

@@ -500,17 +500,21 @@ def playGame():
                     posX,
                     posY,
                     CHIP_LENGTH, CHIP_LENGTH)
-                
-            if (c.owner == None or c.state != STATE_CHIP_PICKED): 
+
+            # real-time avail chip pos   
+            if (c.owner == None or c.state == STATE_CHIP_PICKED): 
                 mousePos = pygame.mouse.get_pos()
 
-                posX = mousePos[0] - CHIP_LENGTH / 2
-                posY = mousePos[1] - CHIP_LENGTH / 2
+                if c.rect.collidepoint(mousePos[0], mousePos[1]):
+                    posX = mousePos[0] - CHIP_LENGTH / 2
+                    posY = mousePos[1] - CHIP_LENGTH / 2
 
-                pos_tuple = tuple(posX, posY)
-
-                # real-time avail chip pos
-                # n.send_message_to_server(socket_code.CHIP_POS_UPDATE + make_pos(pos_tuple).encode())
+                    pos_tuple = tuple([posX, posY])
+                    movement = pygame.mouse.get_rel() 
+                    # detect mouse movement, only send update if the mouse moves
+                    if (movement != (0, 0)): 
+                        print("Client: sending chip state update " + make_pos(pos_tuple))
+                        n.send_message_to_server(socket_code.CHIP_POS_UPDATE + make_pos(pos_tuple).encode())
 
             # if (c.owner == PLAYER_TWO):
             # if (c.owner == PLAYER_THREE):
