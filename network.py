@@ -40,7 +40,8 @@ class Network:
 
         elif instruction == socket_code.SPAWN_CHIP:
             # TODO add chip object when spawning happens
-            print("SERVER SPAWNED CHIP")
+            position = data.replace(socket_code.SPAWN_CHIP, b'')
+            print("Client: got broadcasted chip spawning pos from server " + position.decode())
 
         elif instruction.startswith(socket_code.CLIENT_ID):
             self.client_id = instruction.replace(socket_code.CLIENT_ID, b'')
@@ -112,7 +113,7 @@ class Network:
         except Exception as e:
             print("error connecting to server: ", e)
 
-    def connect(self, username, address):
+    def connect(self, username, address, isHost):
         # todo - pass in username + client from ui
         self.server = address
         self.connect_to_server(username)

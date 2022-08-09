@@ -63,8 +63,6 @@ playGame = False
 mainMenu = True
 
 # network connection
-
-
 def connect(userName, address, isHost=False):
     global n
     n = Network(userName, address, isHost)
@@ -422,8 +420,8 @@ def playGame():
                         c.state = STATE_CHIP_PICKED
                         c.owner = PLAYER_ONE
                         # update chip position and state
-                        print("Client: sending mouse position " + make_pos(mousePos)) 
-                        n.send_message_to_server(socket_code.CHIP_POS_UPDATE + make_pos(mousePos).encode())
+                        print("Client: sending chip state update " + c.state) 
+                        # n.send_message_to_server(socket_code.CHIP_POS_UPDATE + make_pos(mousePos).encode())
                         n.send_message_to_server(socket_code.CHIP_STATE_UPDATE + c.state.encode())
                         break
 
@@ -434,7 +432,7 @@ def playGame():
                         c.state = STATE_CHIP_AVAIL
                         c.owner = PLAYER_NONE
                         print("Client: sending chip state update " + c.state) 
-                        n.send_message_to_server(socket_code.CHIP_POS_UPDATE + make_pos(mousePos).encode())
+                        # n.send_message_to_server(socket_code.CHIP_POS_UPDATE + make_pos(mousePos).encode())
                         n.send_message_to_server(socket_code.CHIP_STATE_UPDATE + c.state.encode())
                         break
 
@@ -444,6 +442,11 @@ def playGame():
                 random.randint(2, 88) * BOWL_LENGTH
             randomChipPosY = BOWL_POSITION + 0.01 * \
                 random.randint(2, 88) * BOWL_LENGTH
+
+            # send chip spawning location to the server
+            pos_tuple = (randomChipPosX, randomChipPosY)
+            n.send_message_to_server(socket_code.SPAWN_CHIP + make_pos(pos_tuple).encode())
+            
             chipRect = pygame.Rect(
                 randomChipPosX,
                 randomChipPosY,
@@ -479,10 +482,11 @@ def playGame():
                 # annouce winner to server
                 print("Client: sending winning client ID")
                 n.send_message_to_server(socket_code.ANNOUNCE_WINNER + str(n.client_id).encode())
-                # print("GAME OVER! Player " + n.client_id.decode() + " has won!")
+                print("GAME OVER! Player " + n.client_id.decode() + " has won!")
                 # TODO need to handle connection to get winner from network
 
                 gameIsRunning = False
+            
 
         # Draw chips and handle movement
         for c in chips:
@@ -496,9 +500,17 @@ def playGame():
                     posX,
                     posY,
                     CHIP_LENGTH, CHIP_LENGTH)
+                
+            if (c.owner == None or c.state != STATE_CHIP_PICKED): 
+                mousePos = pygame.mouse.get_pos()
 
-                # print("Client: sending chip spawned location")
-                # n.send_message_to_server(socket_code.SPAWN_CHIP + make_pos(pos).encode())
+                posX = mousePos[0] - CHIP_LENGTH / 2
+                posY = mousePos[1] - CHIP_LENGTH / 2
+
+                pos_tuple = tuple(posX, posY)
+
+                # real-time avail chip pos
+                # n.send_message_to_server(socket_code.CHIP_POS_UPDATE + make_pos(pos_tuple).encode())
 
             # if (c.owner == PLAYER_TWO):
             # if (c.owner == PLAYER_THREE):

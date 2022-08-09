@@ -152,7 +152,6 @@ def operate_client_requests(instruction, data):
     elif instruction.startswith(socket_code.CHIP_POS_UPDATE):
         position = data.replace(socket_code.CHIP_POS_UPDATE, b'')
         print("Server: broadcasting chip position " + position.decode())
-        # print(socket_code.CHIP_POS_UPDATE + position)
         broadcast(clients, socket_code.CHIP_POS_UPDATE, position) # broadcast updated position
 
     elif instruction.startswith(socket_code.CHIP_STATE_UPDATE):
@@ -166,7 +165,6 @@ def operate_client_requests(instruction, data):
         broadcast(clients, socket_code.ANNOUNCE_WINNER, winner_id)
     
     elif instruction.startswith(socket_code.SPAWN_CHIP): 
-        # TODO chip spawning on screen can be handled here (?)
         position = data.replace(socket_code.SPAWN_CHIP, b'')
         print("Server: spawning chip at " + position.decode())
         broadcast(clients, socket_code.SPAWN_CHIP, position) # broadcast updated position
