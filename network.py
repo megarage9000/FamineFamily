@@ -3,8 +3,13 @@ import threading
 import socket_code
 from signal import signal, SIGPIPE, SIG_IGN
 import pygame
+from chip import Chip
 
 signal(SIGPIPE, SIG_IGN)
+
+# todo decide where to put this
+SCREEN_X = 800
+CHIP_LENGTH = SCREEN_X * 0.05
 
 
 class Network:
@@ -19,6 +24,7 @@ class Network:
         self.client_id = -1
         self.isHost = isHost
         self.isGameStart = False
+        self.chips = []
 
     def operate_server_requests(self, instruction, data):
         print("SERVER INS: ")
@@ -27,7 +33,6 @@ class Network:
             # TODO add functions to operate when join happens
             self.client_id = data.replace(
                 socket_code.CONNECTION_ACK, b'').decode()
-            print("CLIENT SUCCESS JOIN", id)
 
         elif instruction == socket_code.START:
             self.isGameStart = True
@@ -38,22 +43,42 @@ class Network:
             print("SERVER - USER JOIN", user_count)
             self.currentPlayers = user_count
 
-        elif instruction == socket_code.SPAWN_CHIP:
-            # TODO add chip object when spawning happens
-            position = data.replace(socket_code.SPAWN_CHIP, b'')
-            print("Client: got broadcasted chip spawning pos from server " + position.decode())
+        elif instruction.startswith(socket_code.SPAWN_CHIP):
+            rawData = data.replace(socket_code.SPAWN_CHIP, b'')
+            data = rawData.decode().split("?")
+            location = data[0].split(",")
+            print("!!!!! this is location 1!!", location,location[0], location[1])
+
+            chipRect = pygame.Rect(
+                location[0],
+                location[1],
+                CHIP_LENGTH, CHIP_LENGTH)
+
+            newChip = Chip(chipRect)
+            self.chips.append(newChip)
+
+            print(
+                "Client: got broadcasted chip spawning pos from server " + float(location[0]), float(location[1]))
 
         elif instruction.startswith(socket_code.CLIENT_ID):
             self.client_id = instruction.replace(socket_code.CLIENT_ID, b'')
 
-        elif instruction == socket_code.CHIP_POS_UPDATE:
-            position = data.replace(socket_code.CHIP_POS_UPDATE, b'')
-            # TODO handle chip pos on the client/ui side
-            print("Client: got broadcasted chip pos from server " + position.decode())
-
         elif instruction.startswith(socket_code.CHIP_STATE_UPDATE):
             new_state = data.replace(socket_code.CHIP_STATE_UPDATE, b'')
-            print("Client: got broadcasted chip state from server " + new_state.decode())
+            data = new_state.decode().split("?")
+            location = data[0]
+            id = data[1]
+
+            for chip in self.chips: 
+                if (chip.id == id):
+                    chipRect = pygame.Rect(
+                        location[0],
+                        location[1],
+                        CHIP_LENGTH, CHIP_LENGTH)
+            # self.chips.append(position.decode())
+            print("Client: got broadcasted chip state from server " +
+                  new_state.decode())
+            print("chips: ", self.chips)
 
         elif instruction.startswith(socket_code.ANNOUNCE_WINNER):
             winner_id = data.replace(socket_code.ANNOUNCE_WINNER, b'')

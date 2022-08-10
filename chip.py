@@ -2,10 +2,13 @@ import random
 from constants import *
 
 class Chip:
+  counter = 0
   def __init__(self, rect):
     self.state = STATE_CHIP_AVAIL
     self.rect = rect
     self.owner = PLAYER_NONE
+    self.id = Chip.counter
+    Chip.counter += 1
     
     superDoritoChance = random.randint(1,100)
     if superDoritoChance > 80: 

@@ -63,6 +63,8 @@ playGame = False
 mainMenu = True
 
 # network connection
+
+
 def connect(userName, address, isHost=False):
     global n
     n = Network(userName, address, isHost)
@@ -70,7 +72,7 @@ def connect(userName, address, isHost=False):
 
 
 def mainMenu():
-    global n 
+    global n
 
     while True:
         screen.fill((255, 255, 255))
@@ -105,7 +107,7 @@ def mainMenu():
                     sys.exit()
 
         pygame.display.update()
-    
+
     n.disconnect()
 
 
@@ -373,7 +375,6 @@ def createRoom():
                     connect(user_text, IP, True)
                     joinedRoom(IP, user_text)
 
-
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
                     # TODO: implement enter button function via server...?
@@ -399,7 +400,7 @@ def createRoom():
 
 
 def playGame():
-    global n 
+    global n
     mousePos = pygame.mouse.get_pos()
 
     gameIsRunning = True
@@ -415,25 +416,27 @@ def playGame():
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mousePos = pygame.mouse.get_pos()
-                for c in chips:
+                for c in n.chips:
                     if c.rect.collidepoint(mousePos[0], mousePos[1]):
                         c.state = STATE_CHIP_PICKED
                         c.owner = PLAYER_ONE
                         # update chip position and state
-                        print("Client: sending chip state update " + c.state) 
+                        print("Client: sending chip state update " + c.state)
                         # n.send_message_to_server(socket_code.CHIP_POS_UPDATE + make_pos(mousePos).encode())
-                        n.send_message_to_server(socket_code.CHIP_STATE_UPDATE + c.state.encode())
+                        n.send_message_to_server(
+                            socket_code.CHIP_STATE_UPDATE + c.state.encode() + "?".encode() + str(c.id).encode())
                         break
 
             if event.type == pygame.MOUSEBUTTONUP:
                 mousePos = pygame.mouse.get_pos()
-                for c in chips:
+                for c in n.chips:
                     if c.rect.collidepoint(mousePos[0], mousePos[1]):
                         c.state = STATE_CHIP_AVAIL
                         c.owner = PLAYER_NONE
-                        print("Client: sending chip state update " + c.state) 
+                        print("Client: sending chip state update " + c.state)
                         # n.send_message_to_server(socket_code.CHIP_POS_UPDATE + make_pos(mousePos).encode())
-                        n.send_message_to_server(socket_code.CHIP_STATE_UPDATE + c.state.encode())
+                        n.send_message_to_server(
+                            socket_code.CHIP_STATE_UPDATE + c.state.encode() + "?".encode() + str(c.id).encode())
                         break
 
         # Spawn chips
@@ -445,32 +448,27 @@ def playGame():
 
             # send chip spawning location to the server
             pos_tuple = (randomChipPosX, randomChipPosY)
-            n.send_message_to_server(socket_code.SPAWN_CHIP + make_pos(pos_tuple).encode())
-            
-            chipRect = pygame.Rect(
-                randomChipPosX,
-                randomChipPosY,
-                CHIP_LENGTH, CHIP_LENGTH)
 
-            chips.append(Chip(chipRect))
+            n.send_message_to_server(
+                socket_code.SPAWN_CHIP + make_pos(pos_tuple).encode())
 
         # Draw plates and check for chips dropped on plate, if so handle chip and score
         for p in plates:
             pygame.draw.rect(screen, p.getColor(), p)
 
-            for c in chips:
+            for c in n.chips:
                 if p.rect.colliderect(c.rect):
                     p.state = STATE_PLATE_CAN_SCORE
 
                     if c.state == STATE_CHIP_AVAIL:
                         if c.type == CHIP_TYPE_BONUS:
                             p.score += RARE_CHIP_VALUE
-                            # update score for each client 
+                            # update score for each client
                             n.score += RARE_CHIP_VALUE
                         else:
                             p.score += NORMAL_CHIP_VALUE
                             n.score += NORMAL_CHIP_VALUE
-                        chips.remove(c)
+                        n.chips.remove(c)
                         gameSystem.currChips -= 1
                         del c
                     break
@@ -481,15 +479,15 @@ def playGame():
             if n.score >= MAX_SCORE:
                 # annouce winner to server
                 print("Client: sending winning client ID")
-                n.send_message_to_server(socket_code.ANNOUNCE_WINNER + str(n.client_id).encode())
+                n.send_message_to_server(
+                    socket_code.ANNOUNCE_WINNER + str(n.client_id).encode())
                 print("GAME OVER! Player " + n.client_id.decode() + " has won!")
                 # TODO need to handle connection to get winner from network
 
                 gameIsRunning = False
-            
 
         # Draw chips and handle movement
-        for c in chips:
+        for c in n.chips:
             if (c.owner == PLAYER_ONE):
                 mousePos = pygame.mouse.get_pos()
 
@@ -501,8 +499,8 @@ def playGame():
                     posY,
                     CHIP_LENGTH, CHIP_LENGTH)
 
-            # real-time avail chip pos   
-            if (c.owner == None or c.state == STATE_CHIP_PICKED): 
+            # real-time avail chip pos
+            if (c.owner == None or c.state == STATE_CHIP_PICKED):
                 mousePos = pygame.mouse.get_pos()
 
                 if c.rect.collidepoint(mousePos[0], mousePos[1]):
@@ -510,11 +508,13 @@ def playGame():
                     posY = mousePos[1] - CHIP_LENGTH / 2
 
                     pos_tuple = tuple([posX, posY])
-                    movement = pygame.mouse.get_rel() 
+                    movement = pygame.mouse.get_rel()
                     # detect mouse movement, only send update if the mouse moves
-                    if (movement != (0, 0)): 
-                        print("Client: sending chip state update " + make_pos(pos_tuple))
-                        n.send_message_to_server(socket_code.CHIP_POS_UPDATE + make_pos(pos_tuple).encode())
+                    if (movement != (0, 0)):
+                        print("Client: sending chip state update " +
+                              make_pos(pos_tuple))
+                        n.send_message_to_server(socket_code.CHIP_POS_UPDATE + make_pos(
+                            pos_tuple).encode() + "?".encode + str(c.id).encode())
 
             # if (c.owner == PLAYER_TWO):
             # if (c.owner == PLAYER_THREE):
