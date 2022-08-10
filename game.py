@@ -521,7 +521,7 @@ def playGame():
                     movement = pygame.mouse.get_rel()
                     # detect mouse movement, only send update if the mouse moves
                     if (movement != (0, 0)):
-                        print("Client: sending chip state update " +
+                        print("Client: sending real-time chip pos update " +
                               make_pos(pos_tuple))
                         n.send_message_to_server(socket_code.CHIP_POS_UPDATE + make_pos(
                             pos_tuple).encode() + "?".encode() + str(c.id).encode())

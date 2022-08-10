@@ -48,7 +48,7 @@ class Network:
             data = rawData.decode().split("?")
             location = data[0].split(",")
             print("!!!!! this is type 1!!", data[1])
-            print("!!!!! this is type 1!!", data[2])
+            print("!!!!! this is id!!", data[2])
             type = data[1]
             id = int(data[2])
 
@@ -82,6 +82,23 @@ class Network:
             # self.chips.append(position.decode())
             print("Client: got broadcasted chip state from server " +
                   new_state.decode())
+            print("chips: ", self.chips)
+        
+        elif instruction.startswith(socket_code.CHIP_POS_UPDATE): 
+            position = data.replace(socket_code.CHIP_POS_UPDATE, b'')
+            data = position.decode().split("?")
+            location = data[0].split(",")
+            id = data[1]
+
+            for chip in self.chips:
+                if (chip.id == id):
+                    chipRect = pygame.Rect(
+                        location[0],
+                        location[1],
+                        CHIP_LENGTH, CHIP_LENGTH)
+
+            print("Client: got broadcasted chip pos from server " +
+                  position.decode())
             print("chips: ", self.chips)
 
         elif instruction.startswith(socket_code.ANNOUNCE_WINNER):
