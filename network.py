@@ -47,11 +47,8 @@ class Network:
             rawData = data.replace(socket_code.SPAWN_CHIP, b'')
             data = rawData.decode().split("?")
             location = data[0].split(",")
-            print("!!!!! this is type 1!!", data[1])
-            print("!!!!! this is id!!", data[2])
             type = data[1]
             id = int(data[2])
-
 
             chipRect = pygame.Rect(
                 float(location[0]),
@@ -75,31 +72,26 @@ class Network:
 
             for chip in self.chips:
                 if (chip.id == id):
-                    chipRect = pygame.Rect(
+                    chip.rect = pygame.Rect(
                         location[0],
                         location[1],
                         CHIP_LENGTH, CHIP_LENGTH)
             # self.chips.append(position.decode())
             print("Client: got broadcasted chip state from server " +
                   new_state.decode())
-            print("chips: ", self.chips)
-        
-        elif instruction.startswith(socket_code.CHIP_POS_UPDATE): 
+
+        elif instruction.startswith(socket_code.CHIP_POS_UPDATE):
             position = data.replace(socket_code.CHIP_POS_UPDATE, b'')
             data = position.decode().split("?")
             location = data[0].split(",")
             id = data[1]
 
             for chip in self.chips:
-                if (chip.id == id):
-                    chipRect = pygame.Rect(
-                        location[0],
-                        location[1],
+                if (int(chip.id) == int(id)):
+                    chip.rect = pygame.Rect(
+                        float(location[0]),
+                        float(location[1]),
                         CHIP_LENGTH, CHIP_LENGTH)
-
-            print("Client: got broadcasted chip pos from server " +
-                  position.decode())
-            print("chips: ", self.chips)
 
         elif instruction.startswith(socket_code.ANNOUNCE_WINNER):
             winner_id = data.replace(socket_code.ANNOUNCE_WINNER, b'')
@@ -120,13 +112,16 @@ class Network:
             # first four bits are the instructions
             instruction = from_server[:4]
             data = from_server
-            self.operate_server_requests(instruction, data)
-            print("Client: message received from server", data.decode())
+            # self.operate_server_requests(instruction, data)
+
+            s = threading.Thread(
+                target=self.operate_server_requests, args=(instruction, data))
+            s.start()
+            # print("Client: message received from server", data.decode())
 
         # self.client.close()
 
     def send_message_to_server(self, m):
-        print(m)
         try:
             if (type(m) == str):
                 self.client.send(m.encode())

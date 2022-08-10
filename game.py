@@ -209,14 +209,11 @@ def joinRoom():
                 if addr_rect.collidepoint(MENU_MOUSE_POS):
                     addrActive = True
                     nameActive = False
-                    # print("Candice dik fit in yo mouf")
                 elif name_rect.collidepoint(MENU_MOUSE_POS):
                     addrActive = False
                     nameActive = True
-                    # print("sawcon dn")
                 elif ENTER_BUTTON.checkForInput(MENU_MOUSE_POS):
                     connect(name_text, addr_text, False)
-                    # print("gargalon deez nuts: " + addr_text)
                     joinedRoom(addr_text, name_text)
                 elif BACK_BUTTON.checkForInput(MENU_MOUSE_POS):
                     joinCreateRoomMenu()
@@ -227,7 +224,6 @@ def joinRoom():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
                     # TODO: implement enter button function via server...?
-                    print("ligma nuts in this server: " + addr_text)
 
                     connect(name_text, addr_text, False)
                     joinedRoom(addr_text, name_text)
@@ -298,7 +294,6 @@ def joinedRoom(IPAddr, name):
                     # TODO: start game, linked with server
                     n.send_message_to_server(
                         socket_code.START)
-                    # print("kind chin")
                 elif BACK_BUTTON.checkForInput(MENU_MOUSE_POS):
                     joinCreateRoomMenu()
 
@@ -521,8 +516,6 @@ def playGame():
                     movement = pygame.mouse.get_rel()
                     # detect mouse movement, only send update if the mouse moves
                     if (movement != (0, 0)):
-                        print("Client: sending real-time chip pos update " +
-                              make_pos(pos_tuple))
                         n.send_message_to_server(socket_code.CHIP_POS_UPDATE + make_pos(
                             pos_tuple).encode() + "?".encode() + str(c.id).encode())
 
