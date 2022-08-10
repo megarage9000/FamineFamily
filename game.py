@@ -401,6 +401,7 @@ def createRoom():
 
 def playGame():
     global n
+    chipCounter = 0
     mousePos = pygame.mouse.get_pos()
 
     gameIsRunning = True
@@ -449,8 +450,17 @@ def playGame():
             # send chip spawning location to the server
             pos_tuple = (randomChipPosX, randomChipPosY)
 
+            superDoritoChance = random.randint(1, 100)
+            if superDoritoChance > 80:
+                type = CHIP_TYPE_BONUS
+            else:
+                type = CHIP_TYPE_NORMAL
+
+            id = chipCounter
+            chipCounter += 1
+
             n.send_message_to_server(
-                socket_code.SPAWN_CHIP + make_pos(pos_tuple).encode())
+                socket_code.SPAWN_CHIP + make_pos(pos_tuple).encode() + "?".encode() + type.encode() + "?".encode() + str(id).encode())
 
         # Draw plates and check for chips dropped on plate, if so handle chip and score
         for p in plates:
@@ -514,7 +524,7 @@ def playGame():
                         print("Client: sending chip state update " +
                               make_pos(pos_tuple))
                         n.send_message_to_server(socket_code.CHIP_POS_UPDATE + make_pos(
-                            pos_tuple).encode() + "?".encode + str(c.id).encode())
+                            pos_tuple).encode() + "?".encode() + str(c.id).encode())
 
             # if (c.owner == PLAYER_TWO):
             # if (c.owner == PLAYER_THREE):

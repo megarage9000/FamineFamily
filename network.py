@@ -47,18 +47,22 @@ class Network:
             rawData = data.replace(socket_code.SPAWN_CHIP, b'')
             data = rawData.decode().split("?")
             location = data[0].split(",")
-            print("!!!!! this is location 1!!", location,location[0], location[1])
+            print("!!!!! this is type 1!!", data[1])
+            print("!!!!! this is type 1!!", data[2])
+            type = data[1]
+            id = int(data[2])
+
 
             chipRect = pygame.Rect(
-                location[0],
-                location[1],
+                float(location[0]),
+                float(location[1]),
                 CHIP_LENGTH, CHIP_LENGTH)
 
-            newChip = Chip(chipRect)
+            newChip = Chip(chipRect, id, type)
             self.chips.append(newChip)
 
             print(
-                "Client: got broadcasted chip spawning pos from server " + float(location[0]), float(location[1]))
+                "Client: got broadcasted chip spawning pos from server ", float(location[0]), float(location[1]))
 
         elif instruction.startswith(socket_code.CLIENT_ID):
             self.client_id = instruction.replace(socket_code.CLIENT_ID, b'')
@@ -69,7 +73,7 @@ class Network:
             location = data[0]
             id = data[1]
 
-            for chip in self.chips: 
+            for chip in self.chips:
                 if (chip.id == id):
                     chipRect = pygame.Rect(
                         location[0],
