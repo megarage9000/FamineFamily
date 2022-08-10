@@ -10,6 +10,7 @@ signal(SIGPIPE, SIG_IGN)
 # todo decide where to put this
 SCREEN_X = 800
 CHIP_LENGTH = SCREEN_X * 0.05
+chip_lock = threading.Lock()
 
 
 class Network:
@@ -56,7 +57,9 @@ class Network:
                 CHIP_LENGTH, CHIP_LENGTH)
 
             newChip = Chip(chipRect, id, type)
+            chip_lock.acquire()
             self.chips.append(newChip)
+            chip_lock.release()
 
             print(
                 "Client: got broadcasted chip spawning pos from server ", float(location[0]), float(location[1]))
@@ -76,7 +79,6 @@ class Network:
                         location[0],
                         location[1],
                         CHIP_LENGTH, CHIP_LENGTH)
-            # self.chips.append(position.decode())
             print("Client: got broadcasted chip state from server " +
                   new_state.decode())
 

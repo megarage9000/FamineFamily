@@ -67,7 +67,7 @@ def start_server():
             if (len(clients) == MAX_CLIENTS):
                 # TODO: put broadcast here - might be a good idea to kill the accept_client thread
                 s = threading.Thread(
-                    target = broadcast, args=(clients, socket_code.START, b'', ))
+                    target=broadcast, args=(clients, socket_code.START, b'', ))
                 s.start()
                 print("REACHED MAX CLIENTS")
                 break
@@ -84,7 +84,7 @@ def start_server():
 def accept_clients(the_server):
     try:
         while True:
-            if len(clients) < MAX_CLIENTS: 
+            if len(clients) < MAX_CLIENTS:
                 client, addr = the_server.accept()
                 clients.append(client)
                 client_number = len(clients)
@@ -152,19 +152,21 @@ def operate_client_requests(instruction, data):
     elif instruction.startswith(socket_code.CHIP_POS_UPDATE):
         position = data.replace(socket_code.CHIP_POS_UPDATE, b'')
         print("Server: broadcasting chip position " + position.decode())
-        broadcast(clients, socket_code.CHIP_POS_UPDATE, position) # broadcast updated position
+        broadcast(clients, socket_code.CHIP_POS_UPDATE,
+                  position)  # broadcast updated position
 
     elif instruction.startswith(socket_code.CHIP_STATE_UPDATE):
-        new_state = data.replace(socket_code.CHIP_STATE_UPDATE, b'') 
+        new_state = data.replace(socket_code.CHIP_STATE_UPDATE, b'')
         print("Server: broadcasting chip state " + new_state.decode())
-        broadcast(clients, socket_code.CHIP_STATE_UPDATE, new_state) # broadcast updated chip state
-    
-    elif instruction.startswith(socket_code.ANNOUNCE_WINNER): 
+        broadcast(clients, socket_code.CHIP_STATE_UPDATE,
+                  new_state)  # broadcast updated chip state
+
+    elif instruction.startswith(socket_code.ANNOUNCE_WINNER):
         winner_id = data.replace(socket_code.ANNOUNCE_WINNER, b'')
         print("Server: announcing winner of game " + winner_id.decode())
         broadcast(clients, socket_code.ANNOUNCE_WINNER, winner_id)
-    
-    elif instruction.startswith(socket_code.SPAWN_CHIP): 
+
+    elif instruction.startswith(socket_code.SPAWN_CHIP):
         position = data.replace(socket_code.SPAWN_CHIP, b'')
         print("Server: spawning chip at " + position.decode())
         broadcast(clients, socket_code.SPAWN_CHIP, position)

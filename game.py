@@ -436,7 +436,7 @@ def playGame():
                         break
 
         # Spawn chips
-        if gameSystem.attemptChipSpawn() == True:
+        if n.isHost and gameSystem.attemptChipSpawn() == True:
             randomChipPosX = BOWL_POSITION + 0.01 * \
                 random.randint(2, 88) * BOWL_LENGTH
             randomChipPosY = BOWL_POSITION + 0.01 * \
