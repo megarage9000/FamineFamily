@@ -419,7 +419,7 @@ def chipSpawner():
           chipCounter += 1
 
           n.send_message_to_server(
-              socket_code.SPAWN_CHIP + make_pos(pos_tuple).encode() + "?".encode() + type.encode() + "?".encode() + str(id).encode())
+            socket_code.SPAWN_CHIP + make_pos(pos_tuple).encode() + "?".encode() + type.encode() + "?".encode() + str(id).encode() + "?".encode())
           sleep(0.25)
 
 
@@ -432,6 +432,11 @@ def playGame():
     while gameIsRunning:
         screen.fill((255, 255, 255))
         pygame.draw.rect(screen, (200, 200, 200), bowl)
+        print("1!!!!!", gameIsRunning)
+
+        if (n.winner_id != -1):
+            joinRoom()
+            # print("game should end")
 
         # Check for events (mouse clicks, closing window)
         for event in pygame.event.get():
@@ -500,10 +505,11 @@ def playGame():
                 print("Client: sending winning client ID")
                 n.send_message_to_server(
                     socket_code.ANNOUNCE_WINNER + str(n.client_id).encode())
-                print("GAME OVER! Player " + n.client_id.decode() + " has won!")
+                print("GAME OVER! Player " + n.client_id + " has won!")
                 # TODO need to handle connection to get winner from network
-
                 gameIsRunning = False
+                joinRoom()
+                break
 
         # Draw chips and handle movement
         for c in n.chips:
@@ -531,7 +537,7 @@ def playGame():
                     # detect mouse movement, only send update if the mouse moves
                     if (movement != (0, 0)):
                         n.send_message_to_server(socket_code.CHIP_POS_UPDATE + make_pos(
-                            pos_tuple).encode() + "?".encode() + str(c.id).encode())
+                            pos_tuple).encode() + "?".encode() + str(c.id).encode() + "?".encode())
 
             # if (c.owner == PLAYER_TWO):
             # if (c.owner == PLAYER_THREE):

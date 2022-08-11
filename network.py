@@ -26,6 +26,7 @@ class Network:
         self.isHost = isHost
         self.isGameStart = False
         self.chips = []
+        self.winner_id = -1
 
     def operate_server_requests(self, instruction, data):
         print("SERVER INS: ")
@@ -57,9 +58,9 @@ class Network:
                 CHIP_LENGTH, CHIP_LENGTH)
 
             newChip = Chip(chipRect, id, type)
-            chip_lock.acquire()
+            # chip_lock.acquire()
             self.chips.append(newChip)
-            chip_lock.release()
+            # chip_lock.release()
 
             print(
                 "Client: got broadcasted chip spawning pos from server ", float(location[0]), float(location[1]))
@@ -70,15 +71,12 @@ class Network:
         elif instruction.startswith(socket_code.CHIP_STATE_UPDATE):
             new_state = data.replace(socket_code.CHIP_STATE_UPDATE, b'')
             data = new_state.decode().split("?")
-            location = data[0]
+            state = data[0]
             id = data[1]
 
             for chip in self.chips:
                 if (chip.id == id):
-                    chip.rect = pygame.Rect(
-                        location[0],
-                        location[1],
-                        CHIP_LENGTH, CHIP_LENGTH)
+                    chip.state = state
             print("Client: got broadcasted chip state from server " +
                   new_state.decode())
 
@@ -96,7 +94,8 @@ class Network:
                         CHIP_LENGTH, CHIP_LENGTH)
 
         elif instruction.startswith(socket_code.ANNOUNCE_WINNER):
-            winner_id = data.replace(socket_code.ANNOUNCE_WINNER, b'')
+            self.winner_id = int(data.replace(socket_code.ANNOUNCE_WINNER, b'').decode())
+
             # TODO handle winner annoucement in ui
 
         else:
