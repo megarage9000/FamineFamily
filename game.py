@@ -9,6 +9,7 @@ from plate import Plate
 from Button import Button
 from network import Network
 from server import get_IP, start_server, check_game_state, Game_State
+from time import sleep
 import socket_code
 
 pygame.init()
@@ -394,9 +395,37 @@ def createRoom():
         pygame.display.update()
 
 
-def playGame():
+def chipSpawner():
     global n
     chipCounter = 0
+
+    while (True):
+        if gameSystem.attemptChipSpawn() == True:
+          randomChipPosX = BOWL_POSITION + 0.01 * \
+              random.randint(2, 88) * BOWL_LENGTH
+          randomChipPosY = BOWL_POSITION + 0.01 * \
+              random.randint(2, 88) * BOWL_LENGTH
+
+          # send chip spawning location to the server
+          pos_tuple = (randomChipPosX, randomChipPosY)
+
+          superDoritoChance = random.randint(1, 100)
+          if superDoritoChance > 80:
+              type = CHIP_TYPE_BONUS
+          else:
+              type = CHIP_TYPE_NORMAL
+
+          id = chipCounter
+          chipCounter += 1
+
+          n.send_message_to_server(
+              socket_code.SPAWN_CHIP + make_pos(pos_tuple).encode() + "?".encode() + type.encode() + "?".encode() + str(id).encode())
+          sleep(0.25)
+
+
+def playGame():
+    global n
+    chipSpawnerStarted = False
     mousePos = pygame.mouse.get_pos()
 
     gameIsRunning = True
@@ -407,6 +436,7 @@ def playGame():
         # Check for events (mouse clicks, closing window)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                n.client.close()
                 pygame.quit()
                 sys.exit()
 
@@ -436,26 +466,10 @@ def playGame():
                         break
 
         # Spawn chips
-        if n.isHost and gameSystem.attemptChipSpawn() == True:
-            randomChipPosX = BOWL_POSITION + 0.01 * \
-                random.randint(2, 88) * BOWL_LENGTH
-            randomChipPosY = BOWL_POSITION + 0.01 * \
-                random.randint(2, 88) * BOWL_LENGTH
-
-            # send chip spawning location to the server
-            pos_tuple = (randomChipPosX, randomChipPosY)
-
-            superDoritoChance = random.randint(1, 100)
-            if superDoritoChance > 80:
-                type = CHIP_TYPE_BONUS
-            else:
-                type = CHIP_TYPE_NORMAL
-
-            id = chipCounter
-            chipCounter += 1
-
-            n.send_message_to_server(
-                socket_code.SPAWN_CHIP + make_pos(pos_tuple).encode() + "?".encode() + type.encode() + "?".encode() + str(id).encode())
+        if n.isHost and not chipSpawnerStarted:
+            chipSpawnThread = threading.Thread(target=chipSpawner)
+            chipSpawnThread.start()
+            chipSpawnerStarted = True
 
         # Draw plates and check for chips dropped on plate, if so handle chip and score
         for p in plates:
