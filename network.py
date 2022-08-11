@@ -36,6 +36,7 @@ class Network:
             self.client_id = data.replace(
                 socket_code.CONNECTION_ACK, b'').decode()
 
+
         elif instruction == socket_code.START:
             self.isGameStart = True
             print("SERVER - START")
@@ -78,16 +79,18 @@ class Network:
                 if (chip.id == id):
                     chip.state = state
             print("Client: got broadcasted chip state from server " +
-                  new_state.decode())
+                  state, "length: ", len(state))
 
         elif instruction.startswith(socket_code.CHIP_POS_UPDATE):
             position = data.replace(socket_code.CHIP_POS_UPDATE, b'')
             data = position.decode().split("?")
             location = data[0].split(",")
             id = data[1]
+            state = data[2]
 
             for chip in self.chips:
                 if (int(chip.id) == int(id)):
+                    chip.state = state
                     chip.rect = pygame.Rect(
                         float(location[0]),
                         float(location[1]),

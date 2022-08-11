@@ -433,7 +433,6 @@ def playGame():
     while gameIsRunning:
         screen.fill((255, 255, 255))
         pygame.draw.rect(screen, (200, 200, 200), bowl)
-        # print("1!!!!!", gameIsRunning)
 
         if (n.winner_id != -1):
             joinRoom()
@@ -454,9 +453,9 @@ def playGame():
                         c.owner = PLAYER_ONE
                         # update chip position and state
                         print("Client: sending chip state update " + c.state)
-                        # n.send_message_to_server(socket_code.CHIP_POS_UPDATE + make_pos(mousePos).encode())
-                        n.send_message_to_server(
-                            socket_code.CHIP_STATE_UPDATE + c.state.encode() + "?".encode() + str(c.id).encode())
+                        n.send_message_to_server(socket_code.CHIP_POS_UPDATE + make_pos(
+                            tuple([mousePos[0], mousePos[1]])).encode() + "?".encode() + str(c.id).encode() + "?".encode()
+                            + c.state.encode() + "?".encode())
                         break
 
             if event.type == pygame.MOUSEBUTTONUP:
@@ -466,9 +465,9 @@ def playGame():
                         c.state = STATE_CHIP_AVAIL
                         c.owner = PLAYER_NONE
                         print("Client: sending chip state update " + c.state)
-                        # n.send_message_to_server(socket_code.CHIP_POS_UPDATE + make_pos(mousePos).encode())
-                        n.send_message_to_server(
-                            socket_code.CHIP_STATE_UPDATE + c.state.encode() + "?".encode() + str(c.id).encode())
+                        n.send_message_to_server(socket_code.CHIP_POS_UPDATE + make_pos(
+                            tuple([mousePos[0], mousePos[1]])).encode() + "?".encode() + str(c.id).encode() + "?".encode()
+                            + c.state.encode() + "?".encode())
                         break
 
         # Spawn chips
@@ -544,7 +543,8 @@ def playGame():
                     # detect mouse movement, only send update if the mouse moves
                     if (movement != (0, 0)):
                         n.send_message_to_server(socket_code.CHIP_POS_UPDATE + make_pos(
-                            pos_tuple).encode() + "?".encode() + str(c.id).encode() + "?".encode())
+                            pos_tuple).encode() + "?".encode() + str(c.id).encode() + "?".encode()
+                            + c.state.encode() + "?".encode())
 
             # if (c.owner == PLAYER_TWO):
             # if (c.owner == PLAYER_THREE):
