@@ -1,10 +1,16 @@
-import sys, pygame
+import sys
+import pygame
 import random
+import threading
 from constants import *
 from gameSystem import GameSystem
 from chip import Chip
 from plate import Plate
 from Button import Button
+from network import Network
+from server import get_IP, start_server, check_game_state, Game_State
+from time import sleep
+import socket_code
 
 pygame.init()
 
@@ -16,15 +22,17 @@ BOWL_POSITION = SCREEN_X * 0.25
 PLATE_LENGTH = SCREEN_X * 0.2
 PLATE_HALF_POSITION = SCREEN_X * 0.4
 CHIP_LENGTH = SCREEN_X * 0.05
-MAX_SCORE = 30
+MAX_SCORE = 10
 RARE_CHIP_VALUE = 3
 NORMAL_CHIP_VALUE = 1
 
 my_font = pygame.font.SysFont('Ariel', 30)
-screen = pygame.display.set_mode((SCREEN_X, SCREEN_X), pygame.HWSURFACE | pygame.DOUBLEBUF)
+screen = pygame.display.set_mode(
+    (SCREEN_X, SCREEN_X), pygame.HWSURFACE | pygame.DOUBLEBUF)
 gameSystem = GameSystem()
 
-menuScreen = pygame.display.set_mode((SCREEN_X, SCREEN_X), pygame.HWSURFACE | pygame.DOUBLEBUF)
+menuScreen = pygame.display.set_mode(
+    (SCREEN_X, SCREEN_X), pygame.HWSURFACE | pygame.DOUBLEBUF)
 
 chips = []
 plates = []
@@ -32,11 +40,13 @@ plates = []
 # Create all plates (players score upon dropping a chip on a plate)
 plateRect = pygame.Rect(0, PLATE_HALF_POSITION, PLATE_LENGTH, PLATE_LENGTH)
 plates.append(Plate(plateRect, PLAYER_ONE))
-plateRect = pygame.Rect(PLATE_HALF_POSITION, PLATE_HALF_POSITION * 2, PLATE_LENGTH, PLATE_LENGTH)
+plateRect = pygame.Rect(PLATE_HALF_POSITION,
+                        PLATE_HALF_POSITION * 2, PLATE_LENGTH, PLATE_LENGTH)
 plates.append(Plate(plateRect, PLAYER_TWO))
 plateRect = pygame.Rect(PLATE_HALF_POSITION, 0, PLATE_LENGTH, PLATE_LENGTH)
 plates.append(Plate(plateRect, PLAYER_THREE))
-plateRect = pygame.Rect(PLATE_HALF_POSITION * 2, PLATE_HALF_POSITION, PLATE_LENGTH, PLATE_LENGTH)
+plateRect = pygame.Rect(PLATE_HALF_POSITION * 2,
+                        PLATE_HALF_POSITION, PLATE_LENGTH, PLATE_LENGTH)
 plates.append(Plate(plateRect, PLAYER_FOUR))
 
 # Issa bowl
@@ -46,14 +56,25 @@ bowl = pygame.Rect(BOWL_POSITION, BOWL_POSITION, BOWL_LENGTH, BOWL_LENGTH)
 menuBG = pygame.Rect(0, 0, SCREEN_X, SCREEN_X)
 
 # the butt-ons deez nutz
-startButton = pygame.Rect(BUTTON_WIDTH, BUTTON_WIDTH, BUTTON_LENGTH, BUTTON_LENGTH)
+startButton = pygame.Rect(BUTTON_WIDTH, BUTTON_WIDTH,
+                          BUTTON_LENGTH, BUTTON_LENGTH)
 
 # Game loop
 playGame = False
 mainMenu = True
 
+# network connection
+
+
+def connect(userName, address, isHost=False):
+    global n
+    n = Network(userName, address, isHost)
+    return n
+
 
 def mainMenu():
+    global n
+
     while True:
         screen.fill((255, 255, 255))
         pygame.draw.rect(screen, (0, 0, 255), menuBG)
@@ -80,16 +101,20 @@ def mainMenu():
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if PLAY_BUTTON.checkForInput(MENU_MOUSE_POS):
-                    # playGame()
                     joinCreateRoomMenu()
+                    # playGame()
                 if QUIT_BUTTON.checkForInput(MENU_MOUSE_POS):
                     pygame.quit()
                     sys.exit()
 
         pygame.display.update()
 
+    n.disconnect()
+
 
 def joinCreateRoomMenu():
+    global n
+
     while True:
         screen.fill((255, 255, 255))
         pygame.draw.rect(screen, (0, 0, 255), menuBG)
@@ -124,6 +149,8 @@ def joinCreateRoomMenu():
 
 
 def joinRoom():
+    global n
+
     addr_font = pygame.font.Font(None, 32)
     addr_text = ''
     addr_rect = pygame.Rect(300, 400, 140, 32)
@@ -183,24 +210,24 @@ def joinRoom():
                 if addr_rect.collidepoint(MENU_MOUSE_POS):
                     addrActive = True
                     nameActive = False
-                    print("Candice dik fit in yo mouf")
                 elif name_rect.collidepoint(MENU_MOUSE_POS):
                     addrActive = False
                     nameActive = True
-                    print("sawcon dn")
                 elif ENTER_BUTTON.checkForInput(MENU_MOUSE_POS):
-                    # TODO: implement enter button function via server...?
-                    print("gargalon deez nuts: " + addr_text)
+                    connect(name_text, addr_text, False)
+                    joinedRoom(addr_text, name_text)
                 elif BACK_BUTTON.checkForInput(MENU_MOUSE_POS):
                     joinCreateRoomMenu()
                 else:
                     addrActive = False
                     nameActive = False
+
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
                     # TODO: implement enter button function via server...?
-                    print("ligma nuts in this server: " + addr_text)
-                    print("booba cocka")
+
+                    connect(name_text, addr_text, False)
+                    joinedRoom(addr_text, name_text)
                 if event.key != pygame.K_RETURN:
                     if addrActive == True and nameActive == False:
                         if event.key == pygame.K_BACKSPACE:
@@ -215,11 +242,15 @@ def joinRoom():
 
         pygame.display.update()
 
+
 def joinedRoom(IPAddr, name):
+    global n
+
     listFont = pygame.font.Font(None, 32)
     firstUser = name + " has joined.\n"
     userList = [firstUser, "Waiting for users..."]
-    listText = "There are " + str(len(userList) - 1) + " users logged in. Waiting for users..."
+    listText = "There are " + \
+        str(len(userList) - 1) + " users logged in. Waiting for users..."
     userListRect = pygame.Rect(150, 300, 140, 32)
     colour = pygame.Color('white')
 
@@ -236,7 +267,7 @@ def joinedRoom(IPAddr, name):
                              font=my_font, base_color="#d7fcd4", hovering_color="White")
 
         BEGIN_BUTTON = Button(image=pygame.image.load("assets/begin.png"), pos=(400, 550), text_input="",
-                               font=my_font, base_color="#d7fcd4", hovering_color="White")
+                              font=my_font, base_color="#d7fcd4", hovering_color="White")
 
         userSurface = listFont.render(listText, True, (255, 255, 255))
         pygame.draw.rect(screen, colour, userListRect, 2)
@@ -247,6 +278,13 @@ def joinedRoom(IPAddr, name):
         BEGIN_BUTTON.update(screen)
         screen.blit(MENU_TEXT, MENU_RECT)
 
+        # one extra for the placeholder "Waiting for users..." string in List
+        if int(n.currentPlayers) >= 5:
+            listText = "You've reached max capacity. Click Start to begin."
+        else:
+            listText = "There are " + str(n.currentPlayers) + \
+                " users logged in. Waiting for users..."
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -255,19 +293,20 @@ def joinedRoom(IPAddr, name):
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if BEGIN_BUTTON.checkForInput(MENU_MOUSE_POS):
                     # TODO: start game, linked with server
-                    print("kind chin")
+                    n.send_message_to_server(
+                        socket_code.START)
                 elif BACK_BUTTON.checkForInput(MENU_MOUSE_POS):
                     joinCreateRoomMenu()
-            if event.type == pygame.KEYDOWN:
-                if len(userList) >= 5: # one extra for the placeholder "Waiting for users..." string in List
-                    listText = "You've reached max capacity. Click Start to begin."
-                else:
-                    userList.insert(len(userList)-1, "Joe mama has joined.\n")
-                    listText = "There are " + str(len(userList) - 1) + " users logged in. Waiting for users..."
+
+        if (n.isGameStart):
+            playGame()
 
         pygame.display.update()
 
+
 def createRoom():
+    global n
+
     input_font = pygame.font.Font(None, 32)
     user_text = ''
     input_rect = pygame.Rect(300, 300, 140, 32)
@@ -275,12 +314,14 @@ def createRoom():
     active = False
 
     while True:
+
         screen.fill((255, 255, 255))
         pygame.draw.rect(screen, (0, 0, 255), menuBG)
 
         MENU_MOUSE_POS = pygame.mouse.get_pos()
 
-        MENU_TEXT = my_font.render("Create a New Game Session", True, "#b68f40")
+        MENU_TEXT = my_font.render(
+            "Create a New Game Session", True, "#b68f40")
         MENU_RECT = MENU_TEXT.get_rect(center=(400, 100))
 
         LABEL_TEXT = my_font.render("Enter your name below:", True, "#b68f40")
@@ -316,14 +357,35 @@ def createRoom():
                 if BACK_BUTTON.checkForInput(MENU_MOUSE_POS):
                     joinCreateRoomMenu()
                 if CREATE_BUTTON.checkForInput(MENU_MOUSE_POS):
-                    joinedRoom("69.420", user_text)
-                    # TODO: start server room
                     print("Deez Nuts: " + user_text)
+                    IP = get_IP()  # TODO Display IP address
+                    print(IP)
+
+                    t = threading.Thread(
+                        target=start_server)
+                    t.start()
+
+                    while (check_game_state(Game_State.SERVER_NOT_STARTED)):
+                        pass
+
+                    connect(user_text, IP, True)
+                    joinedRoom(IP, user_text)
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
                     # TODO: implement enter button function via server...?
                     print("ligma nuts in this server: " + user_text)
+                    IP = get_IP()  # TODO Display IP address
+                    print(IP)
+
+                    t = threading.Thread(
+                        target=start_server)
+                    t.start()
+
+                    while (check_game_state(Game_State.SERVER_NOT_STARTED)):
+                        pass
+                    connect(user_text, IP, True)
+                    joinedRoom(IP, user_text)
                 if active == True and event.key != pygame.K_RETURN:
                     if event.key == pygame.K_BACKSPACE:
                         user_text = user_text[:-1]
@@ -333,80 +395,110 @@ def createRoom():
         pygame.display.update()
 
 
+def chipSpawner():
+    global n
+    chipCounter = 0
+
+    sleep(2)
+    while (True):
+        if gameSystem.attemptChipSpawn() == True:
+          randomChipPosX = BOWL_POSITION + 0.01 * \
+              random.randint(2, 88) * BOWL_LENGTH
+          randomChipPosY = BOWL_POSITION + 0.01 * \
+              random.randint(2, 88) * BOWL_LENGTH
+
+          # send chip spawning location to the server
+          pos_tuple = (randomChipPosX, randomChipPosY)
+
+          superDoritoChance = random.randint(1, 100)
+          if superDoritoChance > 80:
+              type = CHIP_TYPE_BONUS
+          else:
+              type = CHIP_TYPE_NORMAL
+
+          id = chipCounter
+          chipCounter += 1
+
+          n.send_message_to_server(
+            socket_code.SPAWN_CHIP + make_pos(pos_tuple).encode() + "?".encode() + type.encode() + "?".encode() + str(id).encode() + "?".encode())
+          sleep(0.25)
+
+
 def playGame():
+    global n
+    chipSpawnerStarted = False
+    mousePos = pygame.mouse.get_pos()
+
     gameIsRunning = True
     while gameIsRunning:
         screen.fill((255, 255, 255))
         pygame.draw.rect(screen, (200, 200, 200), bowl)
 
+        if (n.winner_id != -1):
+            joinRoom()
+            # print("game should end")
+
         # Check for events (mouse clicks, closing window)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                n.client.close()
                 pygame.quit()
                 sys.exit()
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mousePos = pygame.mouse.get_pos()
-                for c in chips:
-                    if c.rect.collidepoint(mousePos[0], mousePos[1]):
+                for c in n.chips:
+                    if c.rect.collidepoint(mousePos[0], mousePos[1]) and c.state == STATE_CHIP_AVAIL:
                         c.state = STATE_CHIP_PICKED
                         c.owner = PLAYER_ONE
+                        # update chip position and state
+                        print("Client: sending chip state update " + c.state)
+                        n.send_message_to_server(socket_code.CHIP_POS_UPDATE + make_pos(
+                            tuple([mousePos[0], mousePos[1]])).encode() + "?".encode() + str(c.id).encode() + "?".encode()
+                            + c.state.encode() + "?".encode())
                         break
 
             if event.type == pygame.MOUSEBUTTONUP:
                 mousePos = pygame.mouse.get_pos()
-                for c in chips:
+                for c in n.chips:
                     if c.rect.collidepoint(mousePos[0], mousePos[1]):
                         c.state = STATE_CHIP_AVAIL
                         c.owner = PLAYER_NONE
-                        break
-
-        # Check for events (mouse clicks, closing window)
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                gameIsRunning = False
-
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                mousePos = pygame.mouse.get_pos()
-                for c in chips:
-                    if c.rect.collidepoint(mousePos[0], mousePos[1]):
-                        c.state = STATE_CHIP_PICKED
-                        c.owner = PLAYER_ONE
-                        break
-
-            if event.type == pygame.MOUSEBUTTONUP:
-                mousePos = pygame.mouse.get_pos()
-                for c in chips:
-                    if c.rect.collidepoint(mousePos[0], mousePos[1]):
-                        c.state = STATE_CHIP_AVAIL
-                        c.owner = PLAYER_NONE
+                        print("Client: sending chip state update " + c.state)
+                        n.send_message_to_server(socket_code.CHIP_POS_UPDATE + make_pos(
+                            tuple([mousePos[0], mousePos[1]])).encode() + "?".encode() + str(c.id).encode() + "?".encode()
+                            + c.state.encode() + "?".encode())
                         break
 
         # Spawn chips
-        if gameSystem.attemptChipSpawn() == True:
-            randomChipPosX = BOWL_POSITION + 0.01 * random.randint(2, 88) * BOWL_LENGTH
-            randomChipPosY = BOWL_POSITION + 0.01 * random.randint(2, 88) * BOWL_LENGTH
-            chipRect = pygame.Rect(
-                randomChipPosX,
-                randomChipPosY,
-                CHIP_LENGTH, CHIP_LENGTH)
-
-            chips.append(Chip(chipRect))
+        if n.isHost and not chipSpawnerStarted:
+            chipSpawnThread = threading.Thread(target=chipSpawner)
+            chipSpawnThread.start()
+            chipSpawnerStarted = True
 
         # Draw plates and check for chips dropped on plate, if so handle chip and score
         for p in plates:
             pygame.draw.rect(screen, p.getColor(), p)
 
-            for c in chips:
+            for c in n.chips:
                 if p.rect.colliderect(c.rect):
                     p.state = STATE_PLATE_CAN_SCORE
 
                     if c.state == STATE_CHIP_AVAIL:
                         if c.type == CHIP_TYPE_BONUS:
                             p.score += RARE_CHIP_VALUE
+                            # update score for each client
+                            print("PLATE INDEX: " + str(plates.index(p)) + " | CLIENT ID: " + str(int(n.client_id)-1))
+                            if plates.index(p) == int(n.client_id)-1:
+                                n.score += RARE_CHIP_VALUE
+                                print("CLIENT SCORE: " + str(n.score))
                         else:
                             p.score += NORMAL_CHIP_VALUE
-                        chips.remove(c)
+                            print("PLATE INDEX: " + str(plates.index(p)) + " | CLIENT ID: " + str(int(n.client_id)-1))
+                            if plates.index(p) == int(n.client_id)-1:
+                                n.score += NORMAL_CHIP_VALUE
+                                print("CLIENT SCORE: " + str(n.score))
+                        n.chips.remove(c)
                         gameSystem.currChips -= 1
                         del c
                     break
@@ -414,12 +506,19 @@ def playGame():
                 else:
                     p.state = STATE_PLATE_WONT_SCORE
 
-            if p.score >= MAX_SCORE:
-                print("GAME OVER! Player " + str(plates.index(p)) + " has won!")
+            if n.score >= MAX_SCORE:
+                # annouce winner to server
+                print("Client: sending winning client ID")
+                n.send_message_to_server(
+                    socket_code.ANNOUNCE_WINNER + str(n.client_id).encode())
+                print("GAME OVER! Player " + n.client_id + " has won!")
+                # TODO need to handle connection to get winner from network
                 gameIsRunning = False
+                joinRoom()
+                break
 
         # Draw chips and handle movement
-        for c in chips:
+        for c in n.chips:
             if (c.owner == PLAYER_ONE):
                 mousePos = pygame.mouse.get_pos()
 
@@ -431,18 +530,35 @@ def playGame():
                     posY,
                     CHIP_LENGTH, CHIP_LENGTH)
 
+            # real-time avail chip pos
+            if (c.owner == None or c.state == STATE_CHIP_PICKED):
+                mousePos = pygame.mouse.get_pos()
+
+                if c.rect.collidepoint(mousePos[0], mousePos[1]):
+                    posX = mousePos[0] - CHIP_LENGTH / 2
+                    posY = mousePos[1] - CHIP_LENGTH / 2
+
+                    pos_tuple = tuple([posX, posY])
+                    movement = pygame.mouse.get_rel()
+                    # detect mouse movement, only send update if the mouse moves
+                    if (movement != (0, 0)):
+                        n.send_message_to_server(socket_code.CHIP_POS_UPDATE + make_pos(
+                            pos_tuple).encode() + "?".encode() + str(c.id).encode() + "?".encode()
+                            + c.state.encode() + "?".encode())
+
             # if (c.owner == PLAYER_TWO):
             # if (c.owner == PLAYER_THREE):
             # if (c.owner == PLAYER_FOUR):
             pygame.draw.rect(screen, c.getColor(), c.rect)
 
-        print("Chips: " + str(len(chips)))
+        # print("Chips: " + str(len(chips)))
 
         # Create score objects
         playerOneScore = my_font.render(str(plates[0].score), True, (0, 0, 0))
         playerTwoScore = my_font.render(str(plates[1].score), True, (0, 0, 0))
         playerThreeScore = my_font.render(str(plates[2].score), True, (0, 0, 0))
         playerFourScore = my_font.render(str(plates[3].score), True, (0, 0, 0))
+
 
         # Display score
         screen.blit(playerOneScore, (SCREEN_X * 0.1, SCREEN_X * 0.5))
@@ -451,6 +567,15 @@ def playGame():
         screen.blit(playerFourScore, (SCREEN_X * 0.9, SCREEN_X * 0.5))
         # Update screen
         pygame.display.flip()
+
+# helper function for conversion between positions as a tuple and string
+def read_pos(str):
+    str = str.split(",")
+    return (int(str[0]), int(str[1]))
+
+
+def make_pos(tup):
+    return (str(tup[0]) + "," + str(tup[1]))
 
 
 def end_screen(endgame_text):
