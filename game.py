@@ -448,7 +448,7 @@ def playGame():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mousePos = pygame.mouse.get_pos()
                 for c in n.chips:
-                    if c.rect.collidepoint(mousePos[0], mousePos[1]):
+                    if c.rect.collidepoint(mousePos[0], mousePos[1]) and c.state == STATE_CHIP_AVAIL:
                         c.state = STATE_CHIP_PICKED
                         c.owner = PLAYER_ONE
                         # update chip position and state
