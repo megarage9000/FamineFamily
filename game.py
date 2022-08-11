@@ -63,6 +63,13 @@ startButton = pygame.Rect(BUTTON_WIDTH, BUTTON_WIDTH,
 playGame = False
 mainMenu = True
 
+def displayErrorMessage(message):
+    if(message == ""):
+        return
+    error_text = my_font.render("Error: " + str(message), True, "#ff4040")
+    error_rect = error_text.get_rect(center=(SCREEN_X / 2, SCREEN_X - 100))
+    screen.blit(error_text, error_rect)
+
 # network connection
 
 
@@ -148,8 +155,11 @@ def joinCreateRoomMenu():
         pygame.display.update()
 
 
+
 def joinRoom():
     global n
+
+    error_message = ""
 
     addr_font = pygame.font.Font(None, 32)
     addr_text = ''
@@ -200,6 +210,8 @@ def joinRoom():
         screen.blit(INPUT_NAME_TEXT, INPUT_NAME_RECT)
         screen.blit(INPUT_ADDR_TEXT, INPUT_ADDR_RECT)
 
+        displayErrorMessage(error_message)
+
         # TODO: add events in the loop to check for user input
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -214,8 +226,13 @@ def joinRoom():
                     addrActive = False
                     nameActive = True
                 elif ENTER_BUTTON.checkForInput(MENU_MOUSE_POS):
-                    connect(name_text, addr_text, False)
-                    joinedRoom(addr_text, name_text)
+                    try:
+                        connect(name_text, addr_text, False)
+                    except Exception as e:
+                        error_message = "Unable to join room, please enter a valid IP Address"
+                    else:
+                        # print("gargalon deez nuts: " + addr_text)
+                        joinedRoom(addr_text, name_text)
                 elif BACK_BUTTON.checkForInput(MENU_MOUSE_POS):
                     joinCreateRoomMenu()
                 else:
@@ -226,8 +243,13 @@ def joinRoom():
                 if event.key == pygame.K_RETURN:
                     # TODO: implement enter button function via server...?
 
-                    connect(name_text, addr_text, False)
-                    joinedRoom(addr_text, name_text)
+                    try:
+                        connect(name_text, addr_text, False)
+                    except Exception as e:
+                        error_message = "Unable to join room, please enter a valid IP Address"
+                    else:
+                        # print("gargalon deez nuts: " + addr_text)
+                        joinedRoom(addr_text, name_text)
                 if event.key != pygame.K_RETURN:
                     if addrActive == True and nameActive == False:
                         if event.key == pygame.K_BACKSPACE:
@@ -313,6 +335,8 @@ def createRoom():
     colour = pygame.Color('white')
     active = False
 
+    error_message = ""
+
     while True:
 
         screen.fill((255, 255, 255))
@@ -345,6 +369,8 @@ def createRoom():
         screen.blit(MENU_TEXT, MENU_RECT)
         screen.blit(LABEL_TEXT, LABEL_RECT)
 
+        displayErrorMessage(error_message)
+
         # TODO: add events in the loop to check for user input
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -368,8 +394,12 @@ def createRoom():
                     while (check_game_state(Game_State.SERVER_NOT_STARTED)):
                         pass
 
-                    connect(user_text, IP, True)
-                    joinedRoom(IP, user_text)
+                    try:
+                        connect(user_text, IP, True)
+                    except Exception as e:
+                        error_message = "Unable to create room, check your internet connection"
+                    else:
+                        joinedRoom(IP, user_text)
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
@@ -384,8 +414,12 @@ def createRoom():
 
                     while (check_game_state(Game_State.SERVER_NOT_STARTED)):
                         pass
-                    connect(user_text, IP, True)
-                    joinedRoom(IP, user_text)
+                    try:
+                        connect(user_text, IP, True)
+                    except Exception as e:
+                        error_message = "Unable to create room, check your internet connection"
+                    else:
+                        joinedRoom(IP, user_text)
                 if active == True and event.key != pygame.K_RETURN:
                     if event.key == pygame.K_BACKSPACE:
                         user_text = user_text[:-1]
