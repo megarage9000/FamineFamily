@@ -22,7 +22,7 @@ BOWL_POSITION = SCREEN_X * 0.25
 PLATE_LENGTH = SCREEN_X * 0.2
 PLATE_HALF_POSITION = SCREEN_X * 0.4
 CHIP_LENGTH = SCREEN_X * 0.05
-MAX_SCORE = 30
+MAX_SCORE = 10
 RARE_CHIP_VALUE = 3
 NORMAL_CHIP_VALUE = 1
 
@@ -483,10 +483,16 @@ def playGame():
                         if c.type == CHIP_TYPE_BONUS:
                             p.score += RARE_CHIP_VALUE
                             # update score for each client
-                            n.score += RARE_CHIP_VALUE
+                            print("PLATE INDEX: " + str(plates.index(p)) + " | CLIENT ID: " + str(int(n.client_id)-1))
+                            if plates.index(p) == int(n.client_id)-1:
+                                n.score += RARE_CHIP_VALUE
+                                print("CLIENT SCORE: " + str(n.score))
                         else:
                             p.score += NORMAL_CHIP_VALUE
-                            n.score += NORMAL_CHIP_VALUE
+                            print("PLATE INDEX: " + str(plates.index(p)) + " | CLIENT ID: " + str(int(n.client_id)-1))
+                            if plates.index(p) == int(n.client_id)-1:
+                                n.score += NORMAL_CHIP_VALUE
+                                print("CLIENT SCORE: " + str(n.score))
                         n.chips.remove(c)
                         gameSystem.currChips -= 1
                         del c
@@ -543,9 +549,9 @@ def playGame():
         # Create score objects
         playerOneScore = my_font.render(str(plates[0].score), True, (0, 0, 0))
         playerTwoScore = my_font.render(str(plates[1].score), True, (0, 0, 0))
-        playerThreeScore = my_font.render(
-            str(plates[2].score), True, (0, 0, 0))
+        playerThreeScore = my_font.render(str(plates[2].score), True, (0, 0, 0))
         playerFourScore = my_font.render(str(plates[3].score), True, (0, 0, 0))
+
 
         # Display score
         screen.blit(playerOneScore, (SCREEN_X * 0.1, SCREEN_X * 0.5))
