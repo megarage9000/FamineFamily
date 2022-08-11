@@ -156,6 +156,8 @@ class Network:
 
         except Exception as e:
             print("error connecting to server: ", e)
+            # Bubble up error for proper error detection
+            raise
 
     def connect(self, username, address, isHost):
         # todo - pass in username + client from ui
