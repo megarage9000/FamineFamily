@@ -432,7 +432,7 @@ def playGame():
     while gameIsRunning:
         screen.fill((255, 255, 255))
         pygame.draw.rect(screen, (200, 200, 200), bowl)
-        print("1!!!!!", gameIsRunning)
+        # print("1!!!!!", gameIsRunning)
 
         if (n.winner_id != -1):
             joinRoom()
