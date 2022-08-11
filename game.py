@@ -399,6 +399,7 @@ def chipSpawner():
     global n
     chipCounter = 0
 
+    sleep(2)
     while (True):
         if gameSystem.attemptChipSpawn() == True:
           randomChipPosX = BOWL_POSITION + 0.01 * \
