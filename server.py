@@ -6,6 +6,7 @@ import socket
 import threading
 import socket_code
 from enum import Enum
+import os
 
 
 class Game_State(Enum):
@@ -62,21 +63,6 @@ def start_server():
             target=accept_clients, args=(server,))
         t.start()
 
-        # server loop
-        while True:
-            if (len(clients) == MAX_CLIENTS):
-                # TODO: put broadcast here - might be a good idea to kill the accept_client thread
-                s = threading.Thread(
-                    target=broadcast, args=(clients, socket_code.START, b'', ))
-                s.start()
-                print("REACHED MAX CLIENTS")
-                break
-
-            if (check_game_state(Game_State.START)):
-                # TODO: we can create threads to send stuff here - like chips
-                # print("Game has started")
-                break
-
     except Exception as e:
         print("Error: unable to start thread", e)
 
@@ -84,7 +70,7 @@ def start_server():
 def accept_clients(the_server):
     try:
         while True:
-            if len(clients) < MAX_CLIENTS:
+            if len(clients) < MAX_CLIENTS and not check_game_state(game_state.START):
                 client, addr = the_server.accept()
                 clients.append(client)
                 client_number = len(clients)
@@ -96,13 +82,15 @@ def accept_clients(the_server):
 
                 # each client has their own thread
                 t = threading.Thread(
-                    target=client_thread, args=(client, client_number))
+                    target=client_thread, args=(client, client_number, the_server,))
                 t.start()
+            else:
+                break
     except Exception as e:
         print("Error: unable to accept client connection", e)
 
 
-def client_thread(client_connection, client_number):
+def client_thread(client_connection, client_number, the_server):
     try:
         # Get client name from clients
         client_name = client_connection.recv(4096)
@@ -124,6 +112,11 @@ def client_thread(client_connection, client_number):
             instruction = data[:4]
             print("Server: message received from client is", data.decode())
             operate_client_requests(instruction, data)
+
+            # start shutting down server when winner is announced
+            if (instruction == socket_code.ANNOUNCE_WINNER):
+                break
+
     except Exception as e:
         print("Error: unable to create client thread", e)
 
@@ -135,6 +128,10 @@ def client_thread(client_connection, client_number):
     print("removing client:", idx)
     print("cur clienst:", clients_names)
     client_connection.close()
+
+    if (not clients):
+        the_server.close()
+        os._exit(1)
 
 
 def operate_client_requests(instruction, data):

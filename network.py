@@ -42,7 +42,7 @@ class Network:
             print("SERVER - START")
 
         elif instruction.startswith(socket_code.USER_COUNT):
-            user_count = data.replace(socket_code.USER_COUNT, b'')
+            user_count = data.replace(socket_code.USER_COUNT, b'').decode()
             print("SERVER - USER JOIN", user_count)
             self.currentPlayers = user_count
 
@@ -121,6 +121,9 @@ class Network:
             s = threading.Thread(
                 target=self.operate_server_requests, args=(instruction, data))
             s.start()
+
+            if(instruction == socket_code.ANNOUNCE_WINNER):
+                break
             # print("Client: message received from server", data.decode())
 
         # self.client.close()

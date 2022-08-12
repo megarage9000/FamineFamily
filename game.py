@@ -287,6 +287,7 @@ def joinedRoom(IPAddr, name):
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                n.disconnect()
                 pygame.quit()
                 sys.exit()
 
@@ -435,13 +436,14 @@ def playGame():
         pygame.draw.rect(screen, (200, 200, 200), bowl)
 
         if (n.winner_id != -1):
-            joinRoom()
+            end_screen("GAME OVER! You've lost! Player " +
+                       str(n.winner_id) + " has won :(")
             # print("game should end")
 
         # Check for events (mouse clicks, closing window)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                n.client.close()
+                n.disconnect()
                 pygame.quit()
                 sys.exit()
 
@@ -514,7 +516,7 @@ def playGame():
                 print("GAME OVER! Player " + n.client_id + " has won!")
                 # TODO need to handle connection to get winner from network
                 gameIsRunning = False
-                joinRoom()
+                end_screen("GAME OVER! You've Won!")
                 break
 
         # Draw chips and handle movement
@@ -603,19 +605,19 @@ def end_screen(endgame_text):
 
         leave_button.update(screen)
 
-        # Button to go to main menu
-        return_pos = (3 * SCREEN_X/4, SCREEN_X/2)
-        return_text = my_font.render("Return to Start", True, "#000000")
-        return_rect = return_text.get_rect(center=(return_pos[0], return_pos[1] + 100))
-        screen.blit(return_text, return_rect)
-        return_to_menu = Button(image=pygame.image.load("assets/enter.png"),
-                              pos=return_pos,
-                              text_input="",
-                              font=my_font,
-                              base_color="#000000",
-                              hovering_color="white")
+        # # Button to go to main menu
+        # return_pos = (3 * SCREEN_X/4, SCREEN_X/2)
+        # return_text = my_font.render("Return to Start", True, "#000000")
+        # return_rect = return_text.get_rect(center=(return_pos[0], return_pos[1] + 100))
+        # screen.blit(return_text, return_rect)
+        # return_to_menu = Button(image=pygame.image.load("assets/enter.png"),
+        #                       pos=return_pos,
+        #                       text_input="",
+        #                       font=my_font,
+        #                       base_color="#000000",
+        #                       hovering_color="white")
 
-        return_to_menu.update(screen)
+        # return_to_menu.update(screen)
 
         mouse_pos = pygame.mouse.get_pos()
 
@@ -623,15 +625,23 @@ def end_screen(endgame_text):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+                n.disconnect()
+                pygame.quit()
+                sys.exit()
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if return_to_menu.checkForInput(mouse_pos):
-                    # TODO: Return to main menu here
-                    print("Returning to menu...")
-                elif leave_button.checkForInput(mouse_pos):
-                    # TODO: End game here
+                # if return_to_menu.checkForInput(mouse_pos):
+                #     # TODO: Return to main menu here
+                #     n.disconnect()
+                #     print("Returning to menu...")
+                #     mainMenu()
+                if leave_button.checkForInput(mouse_pos):
                     print("Leaving game...")
                     running = False
+                    n.disconnect()
+                    pygame.quit()
+                    sys.exit()
+
 
         pygame.display.flip()
 
