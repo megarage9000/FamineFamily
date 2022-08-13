@@ -63,9 +63,7 @@ startButton = pygame.Rect(BUTTON_WIDTH, BUTTON_WIDTH,
 playGame = False
 mainMenu = True
 
-# network connection
-
-
+# network connection for player
 def connect(userName, address, isHost=False):
     global n
     n = Network(userName, address, isHost)
@@ -102,14 +100,11 @@ def mainMenu():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if PLAY_BUTTON.checkForInput(MENU_MOUSE_POS):
                     joinCreateRoomMenu()
-                    # playGame()
                 if QUIT_BUTTON.checkForInput(MENU_MOUSE_POS):
                     pygame.quit()
                     sys.exit()
 
         pygame.display.update()
-
-    n.disconnect()
 
 
 def joinCreateRoomMenu():
@@ -214,7 +209,7 @@ def joinRoom():
                     addrActive = False
                     nameActive = True
                 elif ENTER_BUTTON.checkForInput(MENU_MOUSE_POS):
-                    connect(name_text, addr_text, False)
+                    connect(name_text, addr_text, False) # connect global networking object to address
                     joinedRoom(addr_text, name_text)
                 elif BACK_BUTTON.checkForInput(MENU_MOUSE_POS):
                     joinCreateRoomMenu()
@@ -224,8 +219,7 @@ def joinRoom():
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
-                    # TODO: implement enter button function via server...?
-
+                    # connect global networking object to address
                     connect(name_text, addr_text, False)
                     joinedRoom(addr_text, name_text)
                 if event.key != pygame.K_RETURN:
@@ -287,18 +281,18 @@ def joinedRoom(IPAddr, name):
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                n.disconnect()
+                n.disconnect()  # disconnect connection if user quits
                 pygame.quit()
                 sys.exit()
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if BEGIN_BUTTON.checkForInput(MENU_MOUSE_POS):
-                    # TODO: start game, linked with server
+                    # let server know that game should start
                     n.send_message_to_server(
                         socket_code.START)
                 elif BACK_BUTTON.checkForInput(MENU_MOUSE_POS):
                     joinCreateRoomMenu()
-
+        # start game
         if (n.isGameStart):
             playGame()
 
@@ -346,7 +340,6 @@ def createRoom():
         screen.blit(MENU_TEXT, MENU_RECT)
         screen.blit(LABEL_TEXT, LABEL_RECT)
 
-        # TODO: add events in the loop to check for user input
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -354,37 +347,39 @@ def createRoom():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if input_rect.collidepoint(MENU_MOUSE_POS):
                     active = True
-                    print("Candice dik fit in yo mouf")
                 if BACK_BUTTON.checkForInput(MENU_MOUSE_POS):
                     joinCreateRoomMenu()
                 if CREATE_BUTTON.checkForInput(MENU_MOUSE_POS):
-                    print("Deez Nuts: " + user_text)
-                    IP = get_IP()  # TODO Display IP address
+                    IP = get_IP()  
                     print(IP)
-
+                    # create a thread for the server
                     t = threading.Thread(
                         target=start_server)
                     t.start()
 
+                    # waits for server to start before try to connect to server
                     while (check_game_state(Game_State.SERVER_NOT_STARTED)):
                         pass
 
+                    # connect user to client
                     connect(user_text, IP, True)
                     joinedRoom(IP, user_text)
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
-                    # TODO: implement enter button function via server...?
-                    print("ligma nuts in this server: " + user_text)
-                    IP = get_IP()  # TODO Display IP address
+                    IP = get_IP()  
                     print(IP)
 
+                    # create a thread for the server
                     t = threading.Thread(
                         target=start_server)
                     t.start()
 
+                    # waits for server to start before try to connect to server
                     while (check_game_state(Game_State.SERVER_NOT_STARTED)):
                         pass
+
+                    # connect user to client
                     connect(user_text, IP, True)
                     joinedRoom(IP, user_text)
                 if active == True and event.key != pygame.K_RETURN:
@@ -435,10 +430,10 @@ def playGame():
         screen.fill((255, 255, 255))
         pygame.draw.rect(screen, (200, 200, 200), bowl)
 
+        # If someone has won the game, the network object would have received the id of the winner
         if (n.winner_id != -1):
             end_screen("GAME OVER! You've lost! Player " +
                        str(n.winner_id) + " has won :(")
-            # print("game should end")
 
         # Check for events (mouse clicks, closing window)
         for event in pygame.event.get():
@@ -447,19 +442,21 @@ def playGame():
                 pygame.quit()
                 sys.exit()
 
+            # if chip is clicked, check if the chip is available before broadcasting that it is taken
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mousePos = pygame.mouse.get_pos()
                 for c in n.chips:
                     if c.rect.collidepoint(mousePos[0], mousePos[1]) and c.state == STATE_CHIP_AVAIL:
                         c.state = STATE_CHIP_PICKED
                         c.owner = PLAYER_ONE
-                        # update chip position and state
+                        # update chip position and state + id
                         print("Client: sending chip state update " + c.state)
                         n.send_message_to_server(socket_code.CHIP_POS_UPDATE + make_pos(
                             tuple([mousePos[0], mousePos[1]])).encode() + "?".encode() + str(c.id).encode() + "?".encode()
                             + c.state.encode() + "?".encode())
                         break
-
+            
+            # if chip is dropped, broadcast that the chip is available
             if event.type == pygame.MOUSEBUTTONUP:
                 mousePos = pygame.mouse.get_pos()
                 for c in n.chips:
@@ -467,12 +464,13 @@ def playGame():
                         c.state = STATE_CHIP_AVAIL
                         c.owner = PLAYER_NONE
                         print("Client: sending chip state update " + c.state)
+                        # update chip position and state + id
                         n.send_message_to_server(socket_code.CHIP_POS_UPDATE + make_pos(
                             tuple([mousePos[0], mousePos[1]])).encode() + "?".encode() + str(c.id).encode() + "?".encode()
                             + c.state.encode() + "?".encode())
                         break
 
-        # Spawn chips
+        # Spawn chips - only the host can spawn the chip
         if n.isHost and not chipSpawnerStarted:
             chipSpawnThread = threading.Thread(target=chipSpawner)
             chipSpawnThread.start()
@@ -510,11 +508,9 @@ def playGame():
 
             if n.score >= MAX_SCORE:
                 # annouce winner to server
-                print("Client: sending winning client ID")
                 n.send_message_to_server(
                     socket_code.ANNOUNCE_WINNER + str(n.client_id).encode())
                 print("GAME OVER! Player " + n.client_id + " has won!")
-                # TODO need to handle connection to get winner from network
                 gameIsRunning = False
                 end_screen("GAME OVER! You've Won!")
                 break
@@ -548,12 +544,7 @@ def playGame():
                             pos_tuple).encode() + "?".encode() + str(c.id).encode() + "?".encode()
                             + c.state.encode() + "?".encode())
 
-            # if (c.owner == PLAYER_TWO):
-            # if (c.owner == PLAYER_THREE):
-            # if (c.owner == PLAYER_FOUR):
             pygame.draw.rect(screen, c.getColor(), c.rect)
-
-        # print("Chips: " + str(len(chips)))
 
         # Create score objects
         playerOneScore = my_font.render(str(plates[0].score), True, (0, 0, 0))
@@ -631,7 +622,6 @@ def end_screen(endgame_text):
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 # if return_to_menu.checkForInput(mouse_pos):
-                #     # TODO: Return to main menu here
                 #     n.disconnect()
                 #     print("Returning to menu...")
                 #     mainMenu()

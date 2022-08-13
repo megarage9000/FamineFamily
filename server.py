@@ -52,6 +52,7 @@ def start_server():
     print("Your local IP address is:", HOST_ADDR,
           "\nShare this for people to join")
     try:
+        # bind server socket to port
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server.bind((HOST_ADDR, HOST_PORT))
         server.listen(MAX_CLIENTS)  # Max number of connects
@@ -70,6 +71,7 @@ def start_server():
 def accept_clients(the_server):
     try:
         while True:
+            # only accept clients if the game hasn't started or less than max
             if len(clients) < MAX_CLIENTS and not check_game_state(game_state.START):
                 client, addr = the_server.accept()
                 clients.append(client)
@@ -121,27 +123,21 @@ def client_thread(client_connection, client_number, the_server):
         print("Error: unable to create client thread", e)
 
     # find the client index then remove from both lists(client name list and connection list)
-    # TODO: POSSIBLE CONCURRENCY RACE CONDITION
     idx = get_client_index(clients, client_connection)
     del clients_names[idx - 1]
     del clients[idx - 1]
     print("removing client:", idx)
-    print("cur clienst:", clients_names)
+    print("cur client:", clients_names)
     client_connection.close()
 
+    # if there are no more clients, the server shuts down
     if (not clients):
         the_server.close()
         os._exit(1)
 
 
 def operate_client_requests(instruction, data):
-    print("CLIENT INS: ")
-    print(instruction)
-    if instruction == socket_code.CONNECTION_REQ:
-        # TODO add functions to operate when join happens
-        print("USER SENT JOIN")
-
-    elif instruction.startswith(socket_code.START):
+    if instruction.startswith(socket_code.START):
         set_game_state(Game_State.START)
         broadcast(clients, socket_code.START, b'')
         print("Server: game start")
@@ -151,12 +147,6 @@ def operate_client_requests(instruction, data):
         print("Server: broadcasting chip position " + position.decode())
         broadcast(clients, socket_code.CHIP_POS_UPDATE,
                   position)  # broadcast updated position
-
-    elif instruction.startswith(socket_code.CHIP_STATE_UPDATE):
-        new_state = data.replace(socket_code.CHIP_STATE_UPDATE, b'')
-        print("Server: broadcasting chip state " + new_state.decode())
-        broadcast(clients, socket_code.CHIP_STATE_UPDATE,
-                  new_state)  # broadcast updated chip state
 
     elif instruction.startswith(socket_code.ANNOUNCE_WINNER):
         winner_id = data.replace(socket_code.ANNOUNCE_WINNER, b'')
@@ -179,7 +169,7 @@ def broadcast(clients, instruction, message):
     for c in clients:
         c.sendall(instruction + message)
 
-
+# send a message to an individual client
 def send_to(client_connection, message):
     client_connection.send(message)
 
@@ -203,8 +193,3 @@ def read_pos(str):
 def make_pos(tup):
     return (str(tup[0]) + "," + str(tup[1]))
 
-# def main():
-#     start_server()
-
-
-# main()
