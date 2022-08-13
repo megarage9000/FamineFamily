@@ -396,7 +396,7 @@ def chipSpawner():
     chipCounter = 0
 
     sleep(2)
-    while (True):
+    while (n.score < MAX_SCORE):
         if gameSystem.attemptChipSpawn() == True:
           randomChipPosX = BOWL_POSITION + 0.01 * \
               random.randint(2, 88) * BOWL_LENGTH
@@ -485,6 +485,11 @@ def playGame():
                     p.state = STATE_PLATE_CAN_SCORE
 
                     if c.state == STATE_CHIP_AVAIL:
+                        # print("Client: sending chip state update " + c.state)
+                        # n.send_message_to_server(socket_code.CHIP_POS_UPDATE + make_pos(
+                        #     tuple([mousePos[0], mousePos[1]])).encode() + "?".encode() + str(c.id).encode() + "?".encode()
+                        #     + c.state.encode() + "?".encode())
+
                         if c.type == CHIP_TYPE_BONUS:
                             p.score += RARE_CHIP_VALUE
                             # update score for each client
@@ -513,6 +518,11 @@ def playGame():
                 print("GAME OVER! Player " + n.client_id + " has won!")
                 gameIsRunning = False
                 end_screen("GAME OVER! You've Won!")
+                break
+
+            if n.gameEnded == True:
+                gameIsRunning = False
+                end_screen("GAME OVER! You've Lost!")
                 break
 
         # Draw chips and handle movement

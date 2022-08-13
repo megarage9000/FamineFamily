@@ -1,11 +1,11 @@
 import socket
 import threading
 import socket_code
-from signal import signal, SIGPIPE, SIG_IGN
+from signal import signal, SIG_IGN
 import pygame
 from chip import Chip
 
-signal(SIGPIPE, SIG_IGN)
+# signal(SIG_IGN)
 
 SCREEN_X = 800
 CHIP_LENGTH = SCREEN_X * 0.05
@@ -28,8 +28,11 @@ class Network:
         self.isGameStart = False
         self.chips = []
         self.winner_id = -1
+        self.gameEnded = False
 
     def operate_server_requests(self, instruction, data):
+        print(instruction)
+
         if instruction == socket_code.CONNECTION_ACK:
             print("client - connection ack")
             self.client_id = data.replace(
@@ -80,6 +83,8 @@ class Network:
                         CHIP_LENGTH, CHIP_LENGTH)
 
         elif instruction.startswith(socket_code.ANNOUNCE_WINNER):
+            print("The winning message is: ")
+            print(data)
             self.winner_id = int(data.replace(
                 socket_code.ANNOUNCE_WINNER, b'').decode())
 
@@ -102,6 +107,8 @@ class Network:
             s.start()
 
             if(instruction == socket_code.ANNOUNCE_WINNER):
+                print("TEST  aaaaaaaAAAAAAAAAAAAAAAA")
+                self.gameEnded = True
                 break
 
     def send_message_to_server(self, m):
