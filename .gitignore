@@ -46,3 +46,7 @@ coverage.xml
 # Django stuff:
 *.log
 *.pot
+
+.idea
+
+*.pyc
